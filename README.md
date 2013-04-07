@@ -10,5 +10,5 @@ git clone https://github.com/uksysadmin/OpenStackCookbook.git<br>
 cd OpenStackCookbook<br>
 vagrant up<br>
 . novarc<br>
-nova list<br
+nova list<br>
 nova image-list

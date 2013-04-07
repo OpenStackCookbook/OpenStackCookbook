@@ -207,6 +207,7 @@ keystone user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id 
 sudo apt-get update
 sudo apt-get -y install glance
 #sudo apt-get -y install glance-client # borks because of repo issues. I presume will be fixed.
+sudo apt-get -y install python-glanceclient 
 
 # Create database
 MYSQL_ROOT_PASS=openstack
@@ -251,8 +252,8 @@ echo "config_file = /etc/glance/glance-registry-paste.ini
 flavor = keystone
 " | sudo tee -a /etc/glance/glance-registry.conf
 
-sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASSWORD}@${MYSQL_HOST}/glance," /etc/glance/glance-registry.conf
-sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASSWORD}@${MYSQL_HOST}/glance," /etc/glance/glance-api.conf
+sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-registry.conf
+sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-api.conf
 
 sudo stop glance-registry
 sudo start glance-registry

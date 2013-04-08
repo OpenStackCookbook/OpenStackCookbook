@@ -26,23 +26,24 @@ sudo mkdir /mnt/swift_backend
 echo '/mnt/swift/swift-volume /mnt/swift_backend xfs loop,noatime,nodiratime,nobarrier,logbufs=8 0 0' >> /etc/fstab
 sudo mount -a
 
-cd /mnt/swift_backend
-sudo mkdir node1 node2 node3 node4
-sudo chown swift.swift /mnt/swift_backend/*
-for i in {1..4}; do sudo ln -s /mnt/swift_backend/node$i /srv/node$i; done;
-sudo mkdir -p /etc/swift/account-server /etc/swift/container-server /etc/swift/object- - server /srv/node1/device /srv/node2/device /srv/node3/device /srv/node4/device
-sudo mkdir /run/swift
+#cd /mnt/swift_backend
+#sudo mkdir node{1..4}
+#sudo chown swift.swift /mnt/swift_backend/*
+#for i in {1..4}; do sudo ln -s /mnt/swift_backend/node$i /srv/node$i; done;
+#sudo mkdir -p /etc/swift/i{account-server,container-server,object-server} 
+#/srv/node1/device /srv/node2/device /srv/node3/device /srv/node4/device
+#sudo mkdir /run/swift
 
 	# Setup our directory structure
-#	sudo mkdir /mnt/swift_backend/{1..4}
-#	sudo chown swift:swift /mnt/swift_backend/*
-#	sudo ln -s /mnt/swift_backend/{1..4} /srv
-#	sudo mkdir -p /etc/swift/{object-server,container-server,account-server}
-#	for S in {1..4}; do sudo mkdir -p /srv/${S}/node/sdb${S}; done
-#	sudo mkdir -p /var/run/swift
-#	sudo chown -R swift:swift /etc/swift /srv/{1..4}/
-#	mkdir -p /var/run/swift
-#	chown swift:swift /var/run/swift
+	sudo mkdir /mnt/swift_backend/{1..4}
+	sudo chown swift:swift /mnt/swift_backend/*
+	sudo ln -s /mnt/swift_backend/{1..4} /srv
+	sudo mkdir -p /etc/swift/{object-server,container-server,account-server}
+	for S in {1..4}; do sudo mkdir -p /srv/${S}/node/sdb${S}; done
+	sudo mkdir -p /var/run/swift
+	sudo chown -R swift:swift /etc/swift /srv/{1..4}/
+	mkdir -p /var/run/swift
+	chown swift:swift /var/run/swift
 
 	# Setup rsync
 sudo cat > /etc/rsyncd.conf <<EOF
@@ -347,7 +348,7 @@ auth_user = cookbook:admin
 auth_key = openstack
 EOF
 
-sudo chown -L -R swift.swift /etc/swift /srv/node{1..4}/ /run/swift
+sudo chown -L -R swift.swift /etc/swift /srv/{1..4} /run/swift
 
 }
 

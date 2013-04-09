@@ -29,6 +29,6 @@ then
 fi
 
 sudo apt-get update
-sudo apt-get install python-software-properties -y
-sudo add-apt-repository ppa:ubuntu-cloud-archive/grizzly-staging
+# Grizzly Goodness
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
 sudo apt-get update && apt-get upgrade -y

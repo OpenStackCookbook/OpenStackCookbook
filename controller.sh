@@ -271,7 +271,14 @@ export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 export OS_NO_CACHE=1
 
 sudo apt-get -y install wget
-wget http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+# If you have a proxy outside of your VirtualBox environment, use it
+if [[ ! -z "$APT_PROXY" ]]
+then
+	wget --quiet http://${APT_PROXY}/precise-server-cloudimg-amd64-disk1.img        
+else
+	wget http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+fi
+
 glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --container-format=bare --public < precise-server-cloudimg-amd64-disk1.img
 
 

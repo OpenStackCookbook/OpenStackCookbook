@@ -152,8 +152,9 @@ keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --
 
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
+CINDER_ENDPOINT="172.16.0.211"
 
-PUBLIC="http://$ENDPOINT:8776/v1/%(tenant_id)s"
+PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
@@ -270,7 +271,14 @@ export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 export OS_NO_CACHE=1
 
 sudo apt-get -y install wget
-wget http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+# If you have a proxy outside of your VirtualBox environment, use it
+if [[ ! -z "$APT_PROXY" ]]
+then
+	wget --quiet http://${APT_PROXY}/precise-server-cloudimg-amd64-disk1.img        
+else
+	wget http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+fi
+
 glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --container-format=bare --public < precise-server-cloudimg-amd64-disk1.img
 
 
@@ -369,16 +377,20 @@ sudo start nova-scheduler
 sudo start nova-objectstore
 sudo start nova-conductor
 
+##########
+# Cinder #
+##########
+MYSQL_ROOT_PASS=openstack
+MYSQL_CINDER_PASS=openstack
+mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE cinder;'
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$MYSQL_CINDER_PASS');"
 
-
-# Nova (Chapter 3)
-#for d in nova glance cinder keystone quantum
-#do
-#	echo "Creating $d user and databases"
-#	mysql -uroot -p$MYSQL_ROOT_PASS -e "drop database if exists $d;"
-#	mysql -uroot -p$MYSQL_ROOT_PASS -e "create database $d;"
-#	mysql -uroot -p$MYSQL_ROOT_PASS -e "grant all privileges on $d.* to $d@\"localhost\" identified by \"${MYSQL_DB_PASS}\";"
-#	mysql -uroot -p$MYSQL_ROOT_PASS -e "grant all privileges on $d.* to $d@\"${MYSQL_HOST}\" identified by \"${MYSQL_DB_PASS}\";"
-#	mysql -uroot -p$MYSQL_ROOT_PASS -e "grant all privileges on $d.* to $d@\"%\" identified by \"${MYSQL_DB_PASS}\";"
-#done
+# Create a .stacrc file
+cat > /root/.stackrc <<EOF
+export OS_TENANT_NAME=cookbook
+export OS_USERNAME=admin
+export OS_PASSWORD=openstack
+export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
+EOF
 

@@ -114,6 +114,9 @@ keystone service-create --name keystone --type identity --description 'OpenStack
 # Cinder Block Storage Endpoint
 keystone service-create --name volume --type volume --description 'Volume Service'
 
+# Quantum Network Service Endpoint
+keystone service-create --name network --type network --description 'Quantum Network Service'
+
 # OpenStack Compute Nova API
 NOVA_SERVICE_ID=$(keystone service-list | awk '/\ nova\ / {print $2}')
 
@@ -153,12 +156,20 @@ keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
 CINDER_ENDPOINT="172.16.0.211"
-
 PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
 keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+# Quantum Network Service
+QUANTUM_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
+
+PUBLIC="http://$ENDPOINT:9696/"
+ADMIN=$PUBLIC
+INTERNAL=$PUBLIC
+
+keystone endpoint-create --region RegionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Service Tenant
 keystone tenant-create --name service --description "Service Tenant" --enabled true
@@ -172,6 +183,8 @@ keystone user-create --name glance --pass glance --tenant_id $SERVICE_TENANT_ID 
 keystone user-create --name keystone --pass keystone --tenant_id $SERVICE_TENANT_ID --email keystone@localhost --enabled true
 
 keystone user-create --name cinder --pass cinder --tenant_id $SERVICE_TENANT_ID --email cinder@localhost --enabled true
+
+keystone user-create --name quantum --pass quantum --tenant_id $SERVICE_TENANT_ID --email quantum@localhost --enabled true
 
 # Get the nova user id
 NOVA_USER_ID=$(keystone user-list | awk '/\ nova\ / {print $2}')
@@ -199,6 +212,13 @@ CINDER_USER_ID=$(keystone user-list | awk '/\ cinder \ / {print $2}')
 
 # Assign the cinder user the admin role in service tenant
 keystone user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
+# Create quantum service user in the services tenant
+QUANTUM_USER_ID=$(keystone user-list | awk '/\ quantum \ / {print $2}')
+
+# Grant admin role to quantum service user
+keystone user-role-add --user $QUANTUM_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
 
 ######################
 # Chapter 2 GLANCE   #
@@ -339,6 +359,19 @@ public_interface=eth1
 force_dhcp_release=True
 auto_assign_floating_ip=True
 
+#Metadata
+service_quantum_metadata_proxy = True
+quantum_metadata_proxy_shared_secret = helloOpenStack
+metadata_host = ${MY_IP}
+metadata_listen = 127.0.0.1
+metadata_listen_port = 8775
+
+# Cinder #
+volume_driver=nova.volume.driver.ISCSIDriver
+enabled_apis=ec2,osapi_compute,metadata
+volume_api_class=nova.volume.cinder.API
+iscsi_helper=tgtadm
+
 # Images
 image_service=nova.image.glance.GlanceImageService
 glance_api_servers=${GLANCE_HOST}:9292
@@ -346,12 +379,17 @@ glance_api_servers=${GLANCE_HOST}:9292
 # Scheduler
 scheduler_default_filters=AllHostsFilter
 
-# Object Storage
-iscsi_helper=tgtadm
-
 # Auth
 auth_strategy=keystone
 keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
+
+# NoVNC
+novnc_enabled=true
+novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_port=6080
+vncserver_proxyclient_address=${MY_IP}
+vncserver_listen=0.0.0.0
+
 EOF
 
 sudo rm -f $NOVA_CONF
@@ -380,11 +418,25 @@ sudo start nova-conductor
 ##########
 # Cinder #
 ##########
+# Install the DB
 MYSQL_ROOT_PASS=openstack
 MYSQL_CINDER_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE cinder;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%';"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$MYSQL_CINDER_PASS');"
+
+###########
+# Horizon #
+###########
+# Install dependencies
+sudo apt-get install -y memcached novnc
+
+# Install the dashboard (horizon)
+sudo apt-get install -y --no-install-recommends openstack-dashboard nova-novncproxy
+
+# Set default role
+sudo sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${MY_IP}\"/g" /etc/openstack-dashboard/local_settings.py
+
 
 # Create a .stacrc file
 cat > /root/.stackrc <<EOF

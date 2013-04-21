@@ -6,6 +6,7 @@ nodes = {
     'controller'  => [1, 200],
     'compute'  => [1, 201],
     'swift'   => [1, 210],
+    'iscsi'   => [1, 211],
 }
 
 Vagrant.configure("2") do |config|

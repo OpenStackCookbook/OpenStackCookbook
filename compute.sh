@@ -65,7 +65,13 @@ sudo sed -i 's/# Default: enable_tunneling = False/enable_tunneling = True/g' /e
 sudo sed -i 's/# Example: tenant_network_type = gre/tenant_network_type = gre/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tunnel_id_ranges = 1:1000/tunnel_id_ranges = 1:1000/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i "s/# Default: local_ip =/local_ip = ${CONTROLLER_HOST}/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-sudo sed -i 's/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g' /etc/quantum/quantum.conf
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
+
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
 
 # Restart Quantum Services
 service quantum-plugin-openvswitch-agent restart
@@ -155,7 +161,7 @@ EOF
 
 	# Paste file
         sudo sed -i "s/127.0.0.1/'$KEYSTONE_ENDPOINT'/g" $NOVA_API_PASTE
-        sudo sed -i "s/%SERVICE_TENANT_NAME%/'$SERVICE_TENANT'/g" $NOVA_API_PASTE
+        sudo sed -i "s/%SERVICE_TENANT_NAME%/'service'/g" $NOVA_API_PASTE
         sudo sed -i "s/%SERVICE_USER%/nova/g" $NOVA_API_PASTE
         sudo sed -i "s/%SERVICE_PASSWORD%/'$SERVICE_PASS'/g" $NOVA_API_PASTE
 

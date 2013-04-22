@@ -301,6 +301,130 @@ fi
 
 glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --container-format=bare --public < precise-server-cloudimg-amd64-disk1.img
 
+#####################
+# Quantum           #
+#####################
+# Install dependencies
+sudo apt-get install -y linux-headers-`uname -r` build-essential
+sudo apt-get install -y openvswitch-switch openvswitch-datapath-dkms
+
+# Install the network service (quantum)
+sudo apt-get install -y quantum-server quantum-plugin-openvswitch
+
+# Install the network service (quantum) agents
+sudo apt-get install -y quantum-plugin-openvswitch-agent quantum-dhcp-agent quantum-l3-agent
+
+# Create database
+MYSQL_ROOT_PASS=openstack
+MYSQL_QUANTUM_PASS=openstack
+mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE quantum;'
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON quantum.* TO 'quantum'@'%';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'quantum'@'%' = PASSWORD('$MYSQL_QUANTUM_PASS');"
+
+# Configure the quantum OVS plugin
+sudo sed -i "s|sql_connection = sqlite:////var/lib/quantum/ovs.sqlite|sql_connection = mysql://quantum:openstack@10.10.10.200/quantum|g"  /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i 's/# Default: integration_bridge = br-int/integration_bridge = br-int/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i 's/# Default: tunnel_bridge = br-tun/tunnel_bridge = br-tun/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i 's/# Default: enable_tunneling = False/enable_tunneling = True/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i 's/# Example: tenant_network_type = gre/tenant_network_type = gre/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i 's/# Example: tunnel_id_ranges = 1:1000/tunnel_id_ranges = 1:1000/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i "s/# Default: local_ip =/local_ip = 10.10.10.200/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+
+# List the new user and role assigment
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $QUANTUM_USER_ID
+
+# Configure the quantum service to use keystone
+sudo cat > /etc/quantum/api-paste.ini <<EOF
+[composite:quantum]
+use = egg:Paste#urlmap
+/: quantumversions
+/v2.0: quantumapi_v2_0
+
+[composite:quantumapi_v2_0]
+use = call:quantum.auth:pipeline_factory
+noauth = extensions quantumapiapp_v2_0
+keystone = authtoken keystonecontext extensions quantumapiapp_v2_0
+
+[filter:keystonecontext]
+paste.filter_factory = quantum.auth:QuantumKeystoneContext.factory
+
+[filter:authtoken]
+paste.filter_factory = keystone.middleware.auth_token:filter_factory
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = service
+admin_user = quantum
+admin_password = quantum
+
+[filter:extensions]
+paste.filter_factory = quantum.api.extensions:plugin_aware_extension_middleware_factory
+
+[app:quantumversions]
+paste.app_factory = quantum.api.versions:Versions.factory
+
+[app:quantumapiapp_v2_0]
+paste.app_factory = quantum.api.v2.router:APIRouter.factory
+EOF
+
+sudo cat > /etc/quantum/l3_agent.ini <<EOF
+[DEFAULT]
+# Show debugging output in log (sets DEBUG log level output)
+# debug = True
+
+# L3 requires that an interface driver be set.  Choose the one that best
+# matches your plugin.
+
+# OVS based plugins (OVS, Ryu, NEC) that supports L3 agent
+interface_driver = quantum.agent.linux.interface.OVSInterfaceDriver
+auth_url = http://${MY_IP}:35357/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user = quantum
+admin_password = quantum
+EOF
+
+sudo cat > /etc/quantum/metadata_agent.ini <<EOF
+[DEFAULT]
+# The Quantum user information for accessing the Quantum API.
+auth_url = http://${MY_IP}:35357/v2.0
+auth_region = RegionOne
+admin_tenant_name = service
+admin_user = quantum
+admin_password = quantum
+
+# IP address used by Nova metadata server
+nova_metadata_ip = ${MY_IP}
+
+# TCP Port used by Nova metadata server
+nova_metadata_port = 8775
+
+metadata_proxy_shared_secret = helloOpenStack
+EOF
+
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
+sudo sed -i 's/# rabbit_host = localhost/rabbit_host = '${MY_IP}'/g' /etc/quantum/quantum.conf
+sudo sed -i 's/auth_host = 127.0.0.1/auth_host = '${MY_IP}'/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/bind_host = 0.0.0.0/bind_host = '${MY_IP}'/g' /etc/quantum/quantum.conf
+
+# Start Open vSwitch
+sudo service openvswitch-switch restart
+
+# Create the integration and external bridges
+sudo ovs-vsctl add-br br-int
+sudo ovs-vsctl add-br br-ex
+
+# Restart Services
+cd /etc/init.d/; for i in $( ls quantum-* ); do sudo service $i restart; done
+
+# Create a network and subnet
+TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
+PRIVATE_NET_ID=`quantum net-create private | awk '/ id / { print $4 }'`
+PRIVATE_SUBNET1_ID=`quantum subnet-create --tenant-id $TENANT_ID --name private-subnet1 --ip-version 4 $PRIVATE_NET_ID 10.0.0.0/29 | awk '/ id / { print $4 }'`
 
 ######################
 # Chapter 3 COMPUTE  #
@@ -354,10 +478,17 @@ ec2_host=${MYSQL_HOST}
 ec2_dmz_host=${MYSQL_HOST}
 ec2_private_dns_show_ip=True
 
-# Networking
-public_interface=eth1
-force_dhcp_release=True
-auto_assign_floating_ip=True
+# Network settings
+network_api_class=nova.network.quantumv2.api.API
+quantum_url=http://${MY_IP}:9696
+quantum_auth_strategy=keystone
+quantum_admin_tenant_name=service
+quantum_admin_username=quantum
+quantum_admin_password=quantum
+quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
+linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
+firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
 
 #Metadata
 service_quantum_metadata_proxy = True
@@ -436,7 +567,6 @@ sudo apt-get install -y --no-install-recommends openstack-dashboard nova-novncpr
 
 # Set default role
 sudo sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${MY_IP}\"/g" /etc/openstack-dashboard/local_settings.py
-
 
 # Create a .stacrc file
 cat > /root/.stackrc <<EOF

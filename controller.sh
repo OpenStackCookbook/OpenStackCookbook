@@ -322,13 +322,13 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON quantum.* TO 'quantu
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'quantum'@'%' = PASSWORD('$MYSQL_QUANTUM_PASS');"
 
 # Configure the quantum OVS plugin
-sudo sed -i "s|sql_connection = sqlite:////var/lib/quantum/ovs.sqlite|sql_connection = mysql://quantum:openstack@10.10.10.200/quantum|g"  /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i "s|sql_connection = sqlite:////var/lib/quantum/ovs.sqlite|sql_connection = mysql://quantum:openstack@${MY_IP}/quantum|g"  /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Default: integration_bridge = br-int/integration_bridge = br-int/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Default: tunnel_bridge = br-tun/tunnel_bridge = br-tun/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Default: enable_tunneling = False/enable_tunneling = True/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tenant_network_type = gre/tenant_network_type = gre/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tunnel_id_ranges = 1:1000/tunnel_id_ranges = 1:1000/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-sudo sed -i "s/# Default: local_ip =/local_ip = 10.10.10.200/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i "s/# Default: local_ip =/local_ip = ${MY_IP}/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 
 # List the new user and role assigment
 keystone user-list --tenant-id $SERVICE_TENANT_ID

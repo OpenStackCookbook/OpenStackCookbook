@@ -120,7 +120,7 @@ quantum_auth_strategy=keystone
 quantum_admin_tenant_name=service
 quantum_admin_username=quantum
 quantum_admin_password=quantum
-quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+quantum_admin_auth_url=http://${CONTROLLER_HOST}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -148,9 +148,9 @@ keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_base_url=http://${CONTROLLER_HOST}:6080/vnc_auto.html
 novncproxy_port=6080
-vncserver_proxyclient_address=${MY_IP}
+vncserver_proxyclient_address=${CONTROLLER_HOST}
 vncserver_listen=0.0.0.0
 EOF
 

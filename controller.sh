@@ -294,18 +294,21 @@ sudo apt-get -y install wget
 # If you have a proxy outside of your VirtualBox environment, use it
 if [[ ! -z "$APT_PROXY" ]]
 then
-	wget --quiet http://${APT_PROXY}/precise-server-cloudimg-amd64-disk1.img        
+	wget --quiet http://${APT_PROXY}/precise-server-cloudimg-amd64-disk1.img       
+	wget --quiet http://${APT_PROXY}/cirros-0.3.0-x86_64-disk.img 
 else
 	wget http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img
+	wget https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img
 fi
 
 glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --container-format=bare --public < precise-server-cloudimg-amd64-disk1.img
+glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=bare --public < cirros-0.3.0-x86_64-disk.img
 
 #####################
 # Quantum           #
 #####################
 # Install dependencies
-sudo apt-get install -y linux-headers-`uname -r` build-essential
+sudo apt-get install -y linux-headers-`uname -r` build-essential iptables
 sudo apt-get install -y openvswitch-switch openvswitch-datapath-dkms
 
 # Install the network service (quantum)

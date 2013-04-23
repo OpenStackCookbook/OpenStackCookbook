@@ -10,4 +10,5 @@ sudo apt-get install iftop iptraf vim curl wget lighttpd -y
 
 echo 'Acquire::http { Proxy "http://172.16.0.110:3142"; };' | sudo tee /etc/apt/apt.conf.d/01apt-cacher-ng-proxy
 
+wget --quiet https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img -O /var/www/cirros-0.3.0-x86_64-disk.img
 wget --quiet http://uec-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img -O /var/www/precise-server-cloudimg-amd64-disk1.img

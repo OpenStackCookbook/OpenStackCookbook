@@ -65,7 +65,13 @@ sudo sed -i 's/# Default: enable_tunneling = False/enable_tunneling = True/g' /e
 sudo sed -i 's/# Example: tenant_network_type = gre/tenant_network_type = gre/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tunnel_id_ranges = 1:1000/tunnel_id_ranges = 1:1000/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i "s/# Default: local_ip =/local_ip = ${CONTROLLER_HOST}/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-sudo sed -i 's/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g' /etc/quantum/quantum.conf
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
+
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
 
 # Restart Quantum Services
 service quantum-plugin-openvswitch-agent restart
@@ -114,7 +120,7 @@ quantum_auth_strategy=keystone
 quantum_admin_tenant_name=service
 quantum_admin_username=quantum
 quantum_admin_password=quantum
-quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+quantum_admin_auth_url=http://${CONTROLLER_HOST}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -142,9 +148,9 @@ keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_base_url=http://${CONTROLLER_HOST}:6080/vnc_auto.html
 novncproxy_port=6080
-vncserver_proxyclient_address=${MY_IP}
+vncserver_proxyclient_address=${CONTROLLER_HOST}
 vncserver_listen=0.0.0.0
 EOF
 
@@ -155,7 +161,7 @@ EOF
 
 	# Paste file
         sudo sed -i "s/127.0.0.1/'$KEYSTONE_ENDPOINT'/g" $NOVA_API_PASTE
-        sudo sed -i "s/%SERVICE_TENANT_NAME%/'$SERVICE_TENANT'/g" $NOVA_API_PASTE
+        sudo sed -i "s/%SERVICE_TENANT_NAME%/'service'/g" $NOVA_API_PASTE
         sudo sed -i "s/%SERVICE_USER%/nova/g" $NOVA_API_PASTE
         sudo sed -i "s/%SERVICE_PASSWORD%/'$SERVICE_PASS'/g" $NOVA_API_PASTE
 

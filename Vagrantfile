@@ -32,7 +32,7 @@ Vagrant.configure("2") do |config|
                 box.vm.provider :vmware_fusion do |v|
                     v.vmx["memsize"] = 1024
         	    if prefix == "compute"
-	              	v.vmx["memsize"] = 3128
+	              	v.vmx["memsize"] = 2048
 	            elsif prefix == "proxy"
     	                v.vmx["memsize"] = 512
 	            end

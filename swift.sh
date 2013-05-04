@@ -13,6 +13,11 @@ swift_install() {
 	# Create signing directory & Set owner to swift
 	mkdir /var/swift-signing
 	chown -R swift /var/swift-signing
+
+	# Create cache directory & set owner to swift
+	mkdir -p /var/cache/swift
+	chown -R swift:swift /var/cache/swift
+	
 }
 
 swift_configure(){
@@ -311,9 +316,9 @@ keystone --token $SERVICE_TOKEN --endpoint $SERVICE_ENDPOINT service-create --na
 # Service Endpoint URLs
 ID=$(keystone service-list | awk '/\ swift\ / {print $2}')
 
-PUBLIC_URL="http://$SWIFT_PROXY_SERVER:8080/v2/%(tenant_id)s"
-ADMIN_URL="http://$SWIFT_PROXY_SERVER:8080/v2/"
-INTERNAL_URL="http://$SWIFT_PROXY_SERVER:8080/v2/%(tenant_id)s"
+PUBLIC_URL="http://$SWIFT_PROXY_SERVER:8080/v1/AUTH_\$(tenant_id)s"
+ADMIN_URL="http://$SWIFT_PROXY_SERVER:8080/v1/"
+INTERNAL_URL="http://$SWIFT_PROXY_SERVER:8080/v1/AUTH_\$(tenant_id)s"
 
 keystone endpoint-create --region RegionOne --service_id $ID --publicurl $PUBLIC_URL --adminurl $ADMIN_URL --internalurl $INTERNAL_URL
 

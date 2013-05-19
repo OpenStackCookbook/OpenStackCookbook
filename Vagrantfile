@@ -2,9 +2,10 @@
 # vi: set ft=ruby :
 
 nodes = {
-    'proxy'	=> [1, 110],
+#    'proxy'	=> [1, 110],
     'controller'  => [1, 200],
     'compute'  => [1, 201],
+    'network'  => [1, 202],
     'swift'   => [1, 210],
     'iscsi'   => [1, 211],
 }
@@ -25,6 +26,7 @@ Vagrant.configure("2") do |config|
                 box.vm.hostname = "#{hostname}.book"
                 box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
                 box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.0.0" 
+		box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
 
                 box.vm.provision :shell, :path => "#{prefix}.sh"
 
@@ -46,8 +48,12 @@ Vagrant.configure("2") do |config|
 		    if prefix == "compute"
                     	vbox.customize ["modifyvm", :id, "--memory", 3128]
                         vbox.customize ["modifyvm", :id, "--cpus", 2]
+		    elsif prefix == "network"
+		        vbox.customize ["modifyvm", :id, "--memory", 1024]
 		    elsif prefix == "proxy"
 		        vbox.customize ["modifyvm", :id, "--memory", 512]
+		    elsif prefix == "swift"
+		        vbox.customize ["modifyvm", :id, "--memory", 2048]
 		    end
                 end
             end

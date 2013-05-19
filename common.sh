@@ -21,10 +21,10 @@ export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
 
 # Setup Proxy
-export APT_PROXY="172.16.0.110"
-export APT_PROXY_PORT=3142
-#APT_PROXY="192.168.1.1"
-#APT_PROXY_PORT=3128
+#export APT_PROXY="172.16.0.110"
+#export APT_PROXY_PORT=3142
+APT_PROXY="192.168.1.1"
+APT_PROXY_PORT=3128
 #
 # If you have a proxy outside of your VirtualBox environment, use it
 if [[ ! -z "$APT_PROXY" ]]

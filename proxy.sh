@@ -5,7 +5,8 @@ apt-get update && sudo apt-get install apt-cacher-ng -y
 # Use host for cache directory, makes cache directory persistent between proxy server rebuilds
 mkdir -p /vagrant/apt-cacher-ng
 rm -rf /var/cache/apt-cacher-ng
-ln -s /vagrant/apt-cacher-ng /var/cache/apt-cacher-ng
+cd /vagrant
+cp -R apt-cacher-ng/ /var/cache
 chown -R apt-cacher-ng:apt-cacher-ng /var/cache/apt-cacher-ng
 
 # Setup our repo's
@@ -26,7 +27,7 @@ then
 	cp /vagrant/${CIRROS} /var/www/${CIRROS}
 else
 	# Download then store on local host for next time
-	wget --quiet https://launchpad.net/cirros/trunk/0.3.0/+download/${CIRROS} -O /var/www/{$CIRROS}
+	wget --quiet https://launchpad.net/cirros/trunk/0.3.0/+download/${CIRROS} -O /var/www/${CIRROS}
 	cp /var/www/${CIRROS} /vagrant/${CIRROS}
 fi
 

@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 nodes = {
-#    'proxy'	=> [1, 110],
+    'proxy'	=> [1, 110],
     'controller'  => [1, 200],
     'compute'  => [1, 201],
     'network'  => [1, 202],
@@ -16,6 +16,10 @@ Vagrant.configure("2") do |config|
 
     #Default is 2200..something, but port 2200 is used by forescout NAC agent.
     config.vm.usable_port_range= 2800..2900 
+
+    # Sync folder for proxy cache
+    # config.vm.synced_folder "apt-cacher-ng/", "/var/cache/apt-cacher-ng"
+
 
     nodes.each do |prefix, (count, ip_start)|
         count.times do |i|
@@ -48,6 +52,8 @@ Vagrant.configure("2") do |config|
 		    if prefix == "compute"
                     	vbox.customize ["modifyvm", :id, "--memory", 3128]
                         vbox.customize ["modifyvm", :id, "--cpus", 2]
+		    elsif prefix == "controller"
+		        vbox.customize ["modifyvm", :id, "--memory", 2048]
 		    elsif prefix == "network"
 		        vbox.customize ["modifyvm", :id, "--memory", 1024]
 		    elsif prefix == "proxy"

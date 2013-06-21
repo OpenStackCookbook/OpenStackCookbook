@@ -21,10 +21,10 @@ export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
 
 # Setup Proxy
-#export APT_PROXY="172.16.0.110"
-#export APT_PROXY_PORT=3142
-APT_PROXY="192.168.1.1"
-APT_PROXY_PORT=3128
+export APT_PROXY="172.16.0.110"
+export APT_PROXY_PORT=3142
+#APT_PROXY="192.168.1.1"
+#APT_PROXY_PORT=3128
 #
 # If you have a proxy outside of your VirtualBox environment, use it
 if [[ ! -z "$APT_PROXY" ]]
@@ -36,4 +36,13 @@ sudo apt-get update
 # Grizzly Goodness
 sudo apt-get -y install ubuntu-cloud-keyring
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
+echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/grizzly main" | sudo tee-a /etc/apt/sources.list.d/grizzly.list
 sudo apt-get update && apt-get upgrade -y
+
+# Add host entries
+echo "
+172.16.0.200	controller.book controller
+172.16.0.201	compute.book compute
+172.16.0.202	network.book network
+172.16.0.210	swift.book swift
+172.16.0.211	iscsi.book iscsi" | tee -a /etc/hosts

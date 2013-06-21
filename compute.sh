@@ -10,6 +10,9 @@
 # Source in common env vars
 . /vagrant/common.sh
 
+# The routeable IP of the node is on our eth1 interface
+MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+
 # Must define your environment
 MYSQL_HOST=${CONTROLLER_HOST}
 GLANCE_HOST=${CONTROLLER_HOST}
@@ -17,7 +20,7 @@ GLANCE_HOST=${CONTROLLER_HOST}
 nova_compute_install() {
 
 	# Install some packages:
-	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc nova-network 
+	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc
 	sudo apt-get install -y vlan bridge-utils
 	sudo apt-get install -y libvirt-bin pm-utils
 	sudo service ntp restart
@@ -64,7 +67,7 @@ sudo sed -i 's/# Default: tunnel_bridge = br-tun/tunnel_bridge = br-tun/g' /etc/
 sudo sed -i 's/# Default: enable_tunneling = False/enable_tunneling = True/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tenant_network_type = gre/tenant_network_type = gre/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i 's/# Example: tunnel_id_ranges = 1:1000/tunnel_id_ranges = 1:1000/g' /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
-sudo sed -i "s/# Default: local_ip =/local_ip = ${CONTROLLER_HOST}/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+sudo sed -i "s/# Default: local_ip =/local_ip = ${MY_IP}/g" /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
 
 sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
@@ -128,9 +131,9 @@ firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
 #Metadata
 service_quantum_metadata_proxy = True
 quantum_metadata_proxy_shared_secret = helloOpenStack
-metadata_host = ${CONTROLLER_HOST}
-metadata_listen = 127.0.0.1
-metadata_listen_port = 8775
+#metadata_host = ${CONTROLLER_HOST}
+#metadata_listen = 172.16.0.200
+#metadata_listen_port = 8775
 
 # Cinder #
 volume_driver=nova.volume.driver.ISCSIDriver

@@ -1,6 +1,9 @@
 OpenStackCookbook by K. Jackson and C. Bunch<br>
 ============================================<br>
 <br>
+<br>
+Website: http://www.openstackcookbook.com/<br>
+<br>
 Resources for The OpenStack Cloud Computing Cookbook 2nd Edition<br>
 http://www.packtpub.com/openstack-cloud-computing-cookbook/book<br>
 <br>

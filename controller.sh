@@ -519,3 +519,6 @@ export OS_PASSWORD=openstack
 export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 EOF
 
+
+# Hack: restart quantum again...
+service quantum-server restart

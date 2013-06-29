@@ -359,6 +359,11 @@ sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quan
 sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
 sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/quantum/quantum.conf
+
+echo "
+Defaults !requiretty
+quantum ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 sudo service quantum-server restart
 

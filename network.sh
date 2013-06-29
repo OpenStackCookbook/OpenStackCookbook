@@ -59,7 +59,12 @@ enable_tunneling=True
 " | tee -a /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
 
 # /etc/quantum/dhcp_agent.ini 
-echo "root_helper = sudo quantum-rootwrap /etc/quantum/rootwrap.conf" >> /etc/quantum/dhcp_agent.ini
+#echo "root_helper = sudo quantum-rootwrap /etc/quantum/rootwrap.conf" >> /etc/quantum/dhcp_agent.ini
+echo "root_helper = sudo" >> /etc/quantum/dhcp_agent.ini
+
+echo "
+Defaults !requiretty
+quantum ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 
 # Configure Quantum
@@ -69,6 +74,7 @@ sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quan
 sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
 sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
+sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/quantum/quantum.conf
 
 
 
@@ -94,6 +100,8 @@ admin_tenant_name = service
 admin_user = quantum
 admin_password = quantum
 metadata_proxy_shared_secret = helloOpenStack
+nova_metadata_ip = 172.16.0.200
+nova_metadata_port = 8775
 " > /etc/quantum/metadata_agent.ini
 
 sudo service quantum-plugin-openvswitch-agent restart

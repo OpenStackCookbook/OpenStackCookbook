@@ -2,6 +2,9 @@
 
 source /vagrant/common.sh
 
+sudo apt-get -y install python-software-properties
+sudo add-apt-repository -y ppa:ubuntu-cloud-archive/havana-staging
+
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 

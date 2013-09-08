@@ -43,11 +43,11 @@ nova keypair-add --pub-key demokey.pub demokey
 rm -f /vagrant/demokey
 cp demokey /vagrant
 
-CIRROS=$(nova image-list \
-  | awk '/\ Cirros\ / {print $2}')
+UBUNTU=$(nova image-list \
+  | awk '/\ Ubuntu\ / {print $2}')
 
 
-nova boot --flavor 1 --image ${CIRROS} --key_name demokey test1
+nova boot --flavor 1 --image ${UBUNTU} --key_name demokey test1
 
 quantum net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
 

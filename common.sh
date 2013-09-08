@@ -1,9 +1,14 @@
 #!/bin/bash
 
 # common.sh
-#
+
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Website: http://www.openstackcookbook.com/
+# Suitable for OpenStack Grizzly
+
 #
 # Sets up common bits used in each build script.
 #
@@ -35,8 +40,13 @@ fi
 sudo apt-get update
 # Grizzly Goodness
 sudo apt-get -y install ubuntu-cloud-keyring
-#echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
 echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
+
+#sudo apt-get install python-software-properties
+#sudo add-apt-repository ppa:ubuntu-cloud-archive/havana-staging
+
+
 sudo apt-get update && apt-get upgrade -y
 
 # Add host entries

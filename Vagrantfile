@@ -4,10 +4,10 @@
 nodes = {
     'proxy'	=> [1, 110],
     'controller'  => [1, 200],
-    'compute'  => [1, 201],
     'network'  => [1, 202],
+    'compute'  => [1, 201],
     'swift'   => [1, 210],
-    'iscsi'   => [1, 211],
+    'cinder'   => [1, 211],
 }
 
 Vagrant.configure("2") do |config|
@@ -52,10 +52,12 @@ Vagrant.configure("2") do |config|
 		    if prefix == "compute"
                     	vbox.customize ["modifyvm", :id, "--memory", 3128]
                         vbox.customize ["modifyvm", :id, "--cpus", 2]
+			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
 		    elsif prefix == "controller"
 		        vbox.customize ["modifyvm", :id, "--memory", 2048]
 		    elsif prefix == "network"
 		        vbox.customize ["modifyvm", :id, "--memory", 1024]
+			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
 		    elsif prefix == "proxy"
 		        vbox.customize ["modifyvm", :id, "--memory", 512]
 		    elsif prefix == "swift"

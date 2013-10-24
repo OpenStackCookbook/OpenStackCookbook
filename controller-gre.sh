@@ -258,7 +258,19 @@ admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
 # glance-api.conf
-echo "config_file = /etc/glance/glance-api-paste.ini
+echo "[keystone_authtoken]
+service_protocol = http
+service_host = ${MY_IP}
+service_port = 5000
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${MY_IP}:5000/
+admin_tenant_name = service
+admin_user = glance
+admin_password = glance
+[paste_deploy]
+config_file = /etc/glance/glance-api-paste.ini
 flavor = keystone
 " | sudo tee -a /etc/glance/glance-api.conf
 
@@ -276,12 +288,25 @@ admin_password = glance
 " | sudo tee -a /etc/glance/glance-registry-paste.ini
 
 # glance-registry.conf
-echo "config_file = /etc/glance/glance-registry-paste.ini
+echo "[keystone_authtoken]
+service_protocol = http
+service_host = ${MY_IP}
+service_port = 5000
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${MY_IP}:5000/
+admin_tenant_name = service
+admin_user = glance
+admin_password = glance
+[paste_deploy]
+config_file = /etc/glance/glance-registry-paste.ini
 flavor = keystone
 " | sudo tee -a /etc/glance/glance-registry.conf
 
 sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-registry.conf
 sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-api.conf
+
 
 sudo stop glance-registry
 sudo start glance-registry

@@ -72,6 +72,7 @@ sudo apt-get -y install python-keystoneclient
 export ENDPOINT=${MY_IP}
 export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export PASSWORD=openstack
 
 # admin role
 keystone role-create --name admin
@@ -83,7 +84,6 @@ keystone tenant-create --name cookbook --description "Default Cookbook Tenant" -
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
 
-export PASSWORD=openstack
 keystone user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
@@ -297,7 +297,7 @@ export OS_PASSWORD=openstack
 export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 export OS_NO_CACHE=1
 
-sudo apt-get -y install wget
+#sudo apt-get -y install wget
 
 # Get the images
 # First check host
@@ -397,13 +397,21 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE nova;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'nova'@'%' = PASSWORD('$MYSQL_NOVA_PASS');"
 
+echo "****************"
+echo "Before packages installed"
+echo "****************"
+
 sudo apt-get -y install rabbitmq-server nova-api nova-scheduler nova-objectstore dnsmasq nova-conductor
+
+echo "****************"
+echo "After packages installed"
+echo "****************"
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
 NOVA_API_PASTE=/etc/nova/api-paste.ini
 
-cat > /tmp/nova.conf << EOF
+cat > /tmp/nova.conf <<EOF
 [DEFAULT]
 dhcpbridge_flagfile=/etc/nova/nova.conf
 dhcpbridge=/usr/bin/nova-dhcpbridge

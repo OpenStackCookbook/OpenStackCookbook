@@ -40,12 +40,8 @@ fi
 sudo apt-get update
 # Grizzly Goodness
 sudo apt-get -y install ubuntu-cloud-keyring
-echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
-echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/grizzly main" | sudo tee -a /etc/apt/sources.list.d/grizzly.list
-
-#sudo apt-get install python-software-properties
-#sudo add-apt-repository ppa:ubuntu-cloud-archive/havana-staging
-
+echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
+echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
 
 sudo apt-get update && apt-get upgrade -y
 

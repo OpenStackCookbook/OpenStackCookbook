@@ -6,7 +6,7 @@ nodes = {
     'controller'  => [1, 200],
     'network'  => [1, 202],
     'compute'  => [1, 201],
-    'swift'   => [1, 210],
+    # 'swift'   => [1, 210],
     'cinder'   => [1, 211],
 }
 

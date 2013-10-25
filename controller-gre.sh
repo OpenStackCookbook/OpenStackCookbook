@@ -72,6 +72,7 @@ sudo apt-get -y install python-keystoneclient
 export ENDPOINT=${MY_IP}
 export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export PASSWORD=openstack
 
 # admin role
 keystone role-create --name admin
@@ -83,7 +84,6 @@ keystone tenant-create --name cookbook --description "Default Cookbook Tenant" -
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
 
-export PASSWORD=openstack
 keystone user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
@@ -122,8 +122,8 @@ keystone service-create --name keystone --type identity --description 'OpenStack
 # Cinder Block Storage Endpoint
 keystone service-create --name volume --type volume --description 'Volume Service'
 
-# Quantum Network Service Endpoint
-keystone service-create --name network --type network --description 'Quantum Network Service'
+# Neutron Network Service Endpoint
+keystone service-create --name network --type network --description 'Neutron Network Service'
 
 # OpenStack Compute Nova API
 NOVA_SERVICE_ID=$(keystone service-list | awk '/\ nova\ / {print $2}')
@@ -170,14 +170,14 @@ INTERNAL=$PUBLIC
 
 keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-# Quantum Network Service
-QUANTUM_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
+# Neutron Network Service
+NEUTRON_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
 
 PUBLIC="http://$ENDPOINT:9696/"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region RegionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Service Tenant
 keystone tenant-create --name service --description "Service Tenant" --enabled true
@@ -192,7 +192,7 @@ keystone user-create --name keystone --pass keystone --tenant_id $SERVICE_TENANT
 
 keystone user-create --name cinder --pass cinder --tenant_id $SERVICE_TENANT_ID --email cinder@localhost --enabled true
 
-keystone user-create --name quantum --pass quantum --tenant_id $SERVICE_TENANT_ID --email quantum@localhost --enabled true
+keystone user-create --name neutron --pass neutron --tenant_id $SERVICE_TENANT_ID --email neutron@localhost --enabled true
 
 # Get the nova user id
 NOVA_USER_ID=$(keystone user-list | awk '/\ nova\ / {print $2}')
@@ -221,11 +221,11 @@ CINDER_USER_ID=$(keystone user-list | awk '/\ cinder \ / {print $2}')
 # Assign the cinder user the admin role in service tenant
 keystone user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
-# Create quantum service user in the services tenant
-QUANTUM_USER_ID=$(keystone user-list | awk '/\ quantum \ / {print $2}')
+# Create neutron service user in the services tenant
+NEUTRON_USER_ID=$(keystone user-list | awk '/\ neutron \ / {print $2}')
 
-# Grant admin role to quantum service user
-keystone user-role-add --user $QUANTUM_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+# Grant admin role to neutron service user
+keystone user-role-add --user $NEUTRON_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
 
 ######################
@@ -258,7 +258,19 @@ admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
 # glance-api.conf
-echo "config_file = /etc/glance/glance-api-paste.ini
+echo "[keystone_authtoken]
+service_protocol = http
+service_host = ${MY_IP}
+service_port = 5000
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${MY_IP}:5000/
+admin_tenant_name = service
+admin_user = glance
+admin_password = glance
+[paste_deploy]
+config_file = /etc/glance/glance-api-paste.ini
 flavor = keystone
 " | sudo tee -a /etc/glance/glance-api.conf
 
@@ -276,12 +288,25 @@ admin_password = glance
 " | sudo tee -a /etc/glance/glance-registry-paste.ini
 
 # glance-registry.conf
-echo "config_file = /etc/glance/glance-registry-paste.ini
+echo "[keystone_authtoken]
+service_protocol = http
+service_host = ${MY_IP}
+service_port = 5000
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${MY_IP}:5000/
+admin_tenant_name = service
+admin_user = glance
+admin_password = glance
+[paste_deploy]
+config_file = /etc/glance/glance-registry-paste.ini
 flavor = keystone
 " | sudo tee -a /etc/glance/glance-registry.conf
 
 sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-registry.conf
 sudo sed -i "s,^sql_connection.*,sql_connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," /etc/glance/glance-api.conf
+
 
 sudo stop glance-registry
 sudo start glance-registry
@@ -297,7 +322,7 @@ export OS_PASSWORD=openstack
 export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 export OS_NO_CACHE=1
 
-sudo apt-get -y install wget
+#sudo apt-get -y install wget
 
 # Get the images
 # First check host
@@ -324,62 +349,59 @@ glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --co
 glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=bare --public < cirros-0.3.0-x86_64-disk.img
 
 #####################
-# Quantum           #
+# Neutron           #
 #####################
 
 # Create database
 MYSQL_ROOT_PASS=openstack
-MYSQL_QUANTUM_PASS=openstack
-mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE quantum;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON quantum.* TO 'quantum'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'quantum'@'%' = PASSWORD('$MYSQL_QUANTUM_PASS');"
+MYSQL_NEUTRON_PASS=openstack
+mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE neutron;'
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'neutron'@'%' = PASSWORD('$MYSQL_NEUTRON_PASS');"
 
 # List the new user and role assigment
 keystone user-list --tenant-id $SERVICE_TENANT_ID
-keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $QUANTUM_USER_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $NEUTRON_USER_ID
 
-sudo apt-get -y install quantum-server quantum-plugin-openvswitch 
-# /etc/quantum/api-paste.ini
-rm -f /etc/quantum/api-paste.ini
-cp /vagrant/files/quantum/api-paste.ini /etc/quantum/api-paste.ini
+sudo apt-get -y install neutron-server neutron-plugin-openvswitch 
+# /etc/neutron/api-paste.ini
+rm -f /etc/neutron/api-paste.ini
+cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 
-# /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+# /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
-sql_connection=mysql://quantum:openstack@${MYSQL_HOST}/quantum
+sql_connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
 [OVS]
 tenant_network_type=gre
 tunnel_id_ranges=1:1000
 integration_bridge=br-int
 tunnel_bridge=br-tun
 enable_tunneling=True
-root_helper = sudo /usr/bin/quantum-rootwrap /etc/quantum/rootwrap.conf
 
 [SECURITYGROUP]
-# Firewall driver for realizing quantum security group function
-firewall_driver = quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-" | tee -a /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+# Firewall driver for realizing neutron security group function
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+" | sudo tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 
-# Configure Quantum
-sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
-sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/quantum/quantum.conf
+
+# Configure Neutron
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
+sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
+sudo sed -i "s,^sql_connection.*,sql_connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
 
 echo "
 Defaults !requiretty
-quantum ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
+neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
-sudo service quantum-server restart
+sudo service neutron-server restart
 
-# Create a network and subnet
-#TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
-#PRIVATE_NET_ID=`quantum net-create private | awk '/ id / { print $4 }'`
-#PRIVATE_SUBNET1_ID=`quantum subnet-create --tenant-id $TENANT_ID --name private-subnet1 --ip-version 4 $PRIVATE_NET_ID 10.0.0.0/29 | awk '/ id / { print $4 }'`
-#
 ######################
 # Chapter 3 COMPUTE  #
 ######################
@@ -397,13 +419,13 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE nova;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'nova'@'%' = PASSWORD('$MYSQL_NOVA_PASS');"
 
-sudo apt-get -y install rabbitmq-server nova-api nova-scheduler nova-objectstore dnsmasq nova-conductor
+sudo apt-get -y install rabbitmq-server nova-novncproxy novnc nova-api nova-ajax-console-proxy nova-cert nova-conductor nova-consoleauth nova-doc nova-scheduler python-novaclient dnsmasq nova-objectstore
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
 NOVA_API_PASTE=/etc/nova/api-paste.ini
 
-cat > /tmp/nova.conf << EOF
+cat > /tmp/nova.conf <<EOF
 [DEFAULT]
 dhcpbridge_flagfile=/etc/nova/nova.conf
 dhcpbridge=/usr/bin/nova-dhcpbridge
@@ -433,22 +455,25 @@ ec2_dmz_host=${MYSQL_HOST}
 ec2_private_dns_show_ip=True
 
 # Network settings
-network_api_class=nova.network.quantumv2.api.API
-quantum_url=http://${MY_IP}:9696
-quantum_auth_strategy=keystone
-quantum_admin_tenant_name=service
-quantum_admin_username=quantum
-quantum_admin_password=quantum
-quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+network_api_class=nova.network.neutronv2.api.API
+neutron_url=http://${MY_IP}:9696
+neutron_auth_strategy=keystone
+neutron_admin_tenant_name=service
+neutron_admin_username=neutron
+neutron_admin_password=neutron
+neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
-firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
+#firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
+security_group_api=neutron
+firewall_driver=nova.virt.firewall.NoopFirewallDriver
+
+service_neutron_metadata_proxy=true
+neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-service_quantum_metadata_proxy = True
-quantum_metadata_proxy_shared_secret = foo
-#metadata_host = ${MY_IP}
-#metadata_listen = 127.0.0.1
+#metadata_host = ${MYSQL_HOST}
+#metadata_listen = ${MYSQL_HOST}
 #metadata_listen_port = 8775
 
 # Cinder #
@@ -470,17 +495,17 @@ auth_strategy=keystone
 keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
-novnc_enabled=true
-novncproxy_host=${MY_IP}
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
-novncproxy_port=6080
+#novnc_enabled=true
+#novncproxy_host=${MY_IP}
+#novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+#novncproxy_port=6080
 
-xvpvncproxy_port=6081
-xvpvncproxy_host=${MY_IP}
-xvpvncproxy_base_url=http://${MY_IP}:6081/console
+#xvpvncproxy_port=6081
+#xvpvncproxy_host=${MY_IP}
+#xvpvncproxy_base_url=http://${MY_IP}:6081/console
 
-vncserver_proxyclient_address=${MY_IP}
-vncserver_listen=${MY_IP}
+#vncserver_proxyclient_address=${MY_IP}
+#vncserver_listen=${MY_IP}
 
 EOF
 
@@ -499,13 +524,18 @@ sudo nova-manage db sync
 
 sudo stop nova-api
 sudo stop nova-scheduler
-sudo stop nova-objectstore
+sudo stop nova-novncproxy
+sudo stop nova-consoleauth
 sudo stop nova-conductor
+sudo stop nova-cert
+
 
 sudo start nova-api
 sudo start nova-scheduler
-sudo start nova-objectstore
 sudo start nova-conductor
+sudo start nova-cert
+sudo start nova-consoleauth
+sudo start nova-novncproxy
 
 ##########
 # Cinder #
@@ -521,11 +551,10 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$M
 # Horizon #
 ###########
 # Install dependencies
-sudo apt-get install -y memcached novnc
+sudo apt-get install -y memcached
 
 # Install the dashboard (horizon)
-#sudo apt-get install -y --no-install-recommends openstack-dashboard nova-novncproxy
-sudo apt-get install -y openstack-dashboard nova-novncproxy
+sudo apt-get install -y openstack-dashboard
 sudo dpkg --purge openstack-dashboard-ubuntu-theme
 
 # Set default role
@@ -539,6 +568,5 @@ export OS_PASSWORD=openstack
 export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 EOF
 
-
-# Hack: restart quantum again...
-service quantum-server restart
+# Hack: restart neutron again...
+service neutron-server restart

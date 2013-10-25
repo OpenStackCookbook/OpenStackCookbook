@@ -1,5 +1,6 @@
-vagrant destroy -f controller
-vagrant destroy -f compute
-vagrant destroy -f iscsi
-vagrant destroy -f swift
-vagrant up --provider=vmware_fusion
+vagrant destroy -f
+rm -rf .vagrant/
+rm -rf cirros-0.3.0-x86_64-disk.img 
+rm -rf precise-server-cloudimg-amd64-disk1.img
+
+vagrant up

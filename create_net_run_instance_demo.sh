@@ -9,28 +9,28 @@ export OS_NO_CACHE=1
 TENANT_ID=$(keystone tenant-list \
    | awk '/\ cookbook\ / {print $2}')
 
-quantum net-create \
+neutron net-create \
     --tenant-id ${TENANT_ID} \
     cookbook_network_1
 
 
-quantum subnet-create \
+neutron subnet-create \
     --tenant-id ${TENANT_ID} \
     --name cookbook_subnet_1 \
     cookbook_network_1 \
     10.200.0.0/24
 
-quantum router-create \
+neutron router-create \
     --tenant-id ${TENANT_ID} \
     cookbook_router_1
 
-ROUTER_ID=$(quantum router-list \
+ROUTER_ID=$(neutron router-list \
   | awk '/\ cookbook_router_1\ / {print $2}')
 
-SUBNET_ID=$(quantum subnet-list \
+SUBNET_ID=$(neutron subnet-list \
   | awk '/\ cookbook_subnet_1\ / {print $2}')
 
-quantum router-interface-add \
+neutron router-interface-add \
     ${ROUTER_ID} \
     ${SUBNET_ID}
 
@@ -49,22 +49,22 @@ UBUNTU=$(nova image-list \
 
 nova boot --flavor 1 --image ${UBUNTU} --key_name demokey test1
 
-quantum net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
+neutron net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
 
-quantum subnet-create --tenant-id ${TENANT_ID} --name cookbook_float_subnet_1 --allocation-pool start=192.168.100.10,end=192.168.100.20 --gateway 192.168.100.1 ext_net 192.168.100.0/24 --enable_dhcp=False
+neutron subnet-create --tenant-id ${TENANT_ID} --name cookbook_float_subnet_1 --allocation-pool start=192.168.100.10,end=192.168.100.20 --gateway 192.168.100.1 ext_net 192.168.100.0/24 --enable_dhcp=False
 
-ROUTER_ID=$(quantum router-list \
+ROUTER_ID=$(neutron router-list \
   | awk '/\ cookbook_router_1\ / {print $2}')
 
-EXT_NET_ID=$(quantum net-list \
+EXT_NET_ID=$(neutron net-list \
   | awk '/\ ext_net\ / {print $2}')
 
-quantum router-gateway-set \
+neutron router-gateway-set \
     ${ROUTER_ID} \
     ${EXT_NET_ID}
 
-quantum floatingip-create --tenant-id ${TENANT_ID} ext_net
-VM_PORT=$(quantum port-list | awk '/10.200.0.2/ {print $2}')
-FLOAT_ID=$(quantum floatingip-list | awk '/192.168.100.11/ {print $2}')
-quantum floatingip-associate ${FLOAT_ID} ${VM_PORT}
+neutron floatingip-create --tenant-id ${TENANT_ID} ext_net
+VM_PORT=$(neutron port-list | awk '/10.200.0.2/ {print $2}')
+FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
+neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
 

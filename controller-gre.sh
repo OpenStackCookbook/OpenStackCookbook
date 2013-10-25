@@ -419,15 +419,7 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE nova;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'nova'@'%' = PASSWORD('$MYSQL_NOVA_PASS');"
 
-echo "****************"
-echo "Before packages installed"
-echo "****************"
-
-sudo apt-get -y install rabbitmq-server nova-api nova-scheduler nova-objectstore dnsmasq nova-conductor
-
-echo "****************"
-echo "After packages installed"
-echo "****************"
+sudo apt-get -y install rabbitmq-server nova-novncproxy novnc nova-api nova-ajax-console-proxy nova-cert nova-conductor nova-consoleauth nova-doc nova-scheduler python-novaclient dnsmasq nova-objectstore
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
@@ -472,13 +464,16 @@ neutron_admin_password=neutron
 neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
-firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
+#firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
+security_group_api=neutron
+firewall_driver=nova.virt.firewall.NoopFirewallDriver
+
+service_neutron_metadata_proxy=true
+neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-service_neutron_metadata_proxy = True
-neutron_metadata_proxy_shared_secret = foo
-#metadata_host = ${MY_IP}
-#metadata_listen = 127.0.0.1
+#metadata_host = ${MYSQL_HOST}
+#metadata_listen = ${MYSQL_HOST}
 #metadata_listen_port = 8775
 
 # Cinder #
@@ -551,11 +546,10 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$M
 # Horizon #
 ###########
 # Install dependencies
-sudo apt-get install -y memcached novnc
+sudo apt-get install -y memcached
 
 # Install the dashboard (horizon)
-#sudo apt-get install -y --no-install-recommends openstack-dashboard nova-novncproxy
-sudo apt-get install -y openstack-dashboard nova-novncproxy
+sudo apt-get install -y openstack-dashboard
 sudo dpkg --purge openstack-dashboard-ubuntu-theme
 
 # Set default role
@@ -568,7 +562,6 @@ export OS_USERNAME=admin
 export OS_PASSWORD=openstack
 export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 EOF
-
 
 # Hack: restart neutron again...
 service neutron-server restart

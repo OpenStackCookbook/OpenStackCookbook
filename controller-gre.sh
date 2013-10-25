@@ -495,17 +495,17 @@ auth_strategy=keystone
 keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
-novnc_enabled=true
-novncproxy_host=${MY_IP}
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
-novncproxy_port=6080
+#novnc_enabled=true
+#novncproxy_host=${MY_IP}
+#novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+#novncproxy_port=6080
 
-xvpvncproxy_port=6081
-xvpvncproxy_host=${MY_IP}
-xvpvncproxy_base_url=http://${MY_IP}:6081/console
+#xvpvncproxy_port=6081
+#xvpvncproxy_host=${MY_IP}
+#xvpvncproxy_base_url=http://${MY_IP}:6081/console
 
-vncserver_proxyclient_address=${MY_IP}
-vncserver_listen=${MY_IP}
+#vncserver_proxyclient_address=${MY_IP}
+#vncserver_listen=${MY_IP}
 
 EOF
 
@@ -524,13 +524,18 @@ sudo nova-manage db sync
 
 sudo stop nova-api
 sudo stop nova-scheduler
-sudo stop nova-objectstore
+sudo stop nova-novncproxy
+sudo stop nova-consoleauth
 sudo stop nova-conductor
+sudo stop nova-cert
+
 
 sudo start nova-api
 sudo start nova-scheduler
-sudo start nova-objectstore
 sudo start nova-conductor
+sudo start nova-cert
+sudo start nova-consoleauth
+sudo start nova-novncproxy
 
 ##########
 # Cinder #

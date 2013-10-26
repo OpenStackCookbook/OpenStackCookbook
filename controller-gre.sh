@@ -257,6 +257,12 @@ admin_user = glance
 admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
+sudo -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,
+               glance.store.http.Store,
+               glance.store.rbd.Store,
+               glance.store.s3.Store,
+               glance.store.swift.Store/" /etc/glance/glance-api.conf
+
 # glance-api.conf
 echo "[keystone_authtoken]
 service_protocol = http
@@ -394,7 +400,7 @@ sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
 sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
-sudo sed -i "s,^sql_connection.*,sql_connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
+sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
 
 echo "
 Defaults !requiretty

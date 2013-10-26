@@ -38,7 +38,7 @@ then
 fi
 
 sudo apt-get update
-# Grizzly Goodness
+# Havana Goodness
 sudo apt-get -y install ubuntu-cloud-keyring
 echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
 echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
@@ -51,4 +51,4 @@ echo "
 172.16.0.201	compute.book compute
 172.16.0.202	network.book network
 172.16.0.210	swift.book swift
-172.16.0.211	iscsi.book iscsi" | tee -a /etc/hosts
+172.16.0.211	cinder.book cinder" | tee -a /etc/hosts

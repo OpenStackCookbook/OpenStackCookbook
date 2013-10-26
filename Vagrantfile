@@ -6,11 +6,17 @@ nodes = {
     'controller'  => [1, 200],
     'network'  => [1, 202],
     'compute'  => [1, 201],
-    # 'swift'   => [1, 210],
+    'swift'   => [1, 210],
     'cinder'   => [1, 211],
 }
 
 Vagrant.configure("2") do |config|
+    
+    #config.proxy.http     = "http://192.168.1.1:3128/"
+    #config.proxy.https    = "http://192.168.1.1:3128/"
+    #config.proxy.no_proxy = "localhost,127.0.0.1"
+
+
     config.vm.box = "precise64"
     config.vm.box_url = "http://files.vagrantup.com/precise64.box"
 
@@ -50,7 +56,7 @@ Vagrant.configure("2") do |config|
                     vbox.customize ["modifyvm", :id, "--memory", 1024]
                     vbox.customize ["modifyvm", :id, "--cpus", 1]
 		    if prefix == "compute"
-                    	vbox.customize ["modifyvm", :id, "--memory", 3128]
+                    	vbox.customize ["modifyvm", :id, "--memory", 2048]
                         vbox.customize ["modifyvm", :id, "--cpus", 2]
 			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
 		    elsif prefix == "controller"

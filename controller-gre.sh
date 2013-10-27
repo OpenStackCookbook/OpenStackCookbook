@@ -257,10 +257,10 @@ admin_user = glance
 admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
-sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,
-               glance.store.http.Store,
-               glance.store.rbd.Store,
-               glance.store.s3.Store,
+sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,\
+               glance.store.http.Store,\
+               glance.store.rbd.Store,\
+               glance.store.s3.Store,\
                glance.store.swift.Store/' /etc/glance/glance-api.conf
 
 # glance-api.conf

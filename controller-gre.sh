@@ -257,7 +257,7 @@ admin_user = glance
 admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
-sudo -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,
+sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,
                glance.store.http.Store,
                glance.store.rbd.Store,
                glance.store.s3.Store,
@@ -467,7 +467,7 @@ neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
+neutron_admin_auth_url=http://${MY_IP}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 #firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver

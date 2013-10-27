@@ -173,7 +173,7 @@ keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --pu
 # Neutron Network Service
 NEUTRON_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
 
-PUBLIC="http://$ENDPOINT:9696/"
+PUBLIC="http://$ENDPOINT:9696"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 

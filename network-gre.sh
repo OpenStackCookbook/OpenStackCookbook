@@ -87,13 +87,13 @@ sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = ser
 sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
-
-
+sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
+sudo sed -i "s,^connection.*,connection = mysql://neutron:openstack@${CONTROLLER_HOST}/neutron," /etc/neutron/neutron.conf
+sudo sed -i "s,^sql_connection.*,sql_connection = mysql://neutron:openstack@${CONTROLLER_HOST}/neutron," /etc/neutron/dhcp_agent.ini
+sudo sed -i "s/# interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/g" /etc/neutron/l3_agent.ini
 
 # Restart Quantum Services
 service neutron-plugin-openvswitch-agent restart
-
-
 
 # /etc/neutron/l3_agent.ini
 echo "
@@ -108,7 +108,7 @@ use_namespaces = True" | tee -a /etc/neutron/l3_agent.ini
 
 # Metadata Agent
 echo "[DEFAULT]
-auth_url = http://172.16.0.200:35357/v2.0
+auth_url = http://${KEYSTONE_ENDPOINT}:35357/v2.0
 auth_region = RegionOne
 admin_tenant_name = service
 admin_user = neutron

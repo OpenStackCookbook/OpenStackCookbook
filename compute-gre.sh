@@ -85,7 +85,7 @@ sudo apt-get install -y neutron-plugin-openvswitch-agent python-cinderclient
 echo "
 [DATABASE]
 reconnect_interval = 2
-sql_connection=mysql://neutron:openstack@${CONTROLLER_HOST}/neutron
+connection=mysql://neutron:openstack@${CONTROLLER_HOST}/neutron
 [AGENT]
 # Agent's polling interval in seconds
 polling_interval = 2

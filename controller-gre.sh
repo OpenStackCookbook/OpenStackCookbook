@@ -377,7 +377,7 @@ cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 # /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
-sql_connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
+connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
 [OVS]
 tenant_network_type=gre
 tunnel_id_ranges=1:1000

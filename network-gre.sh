@@ -106,6 +106,9 @@ metadata_ip = ${CONTROLLER_HOST}
 metadata_port = 8775
 use_namespaces = True" | tee -a /etc/neutron/l3_agent.ini
 
+#
+sed -i 's/.*OVSInterfaceDriver.*/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/' /etc/neutron/l3_agent.ini 
+
 # Metadata Agent
 echo "[DEFAULT]
 auth_url = http://172.16.0.200:35357/v2.0

@@ -261,7 +261,7 @@ sudo -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,
                glance.store.http.Store,
                glance.store.rbd.Store,
                glance.store.s3.Store,
-               glance.store.swift.Store/" /etc/glance/glance-api.conf
+               glance.store.swift.Store/' /etc/glance/glance-api.conf
 
 # glance-api.conf
 echo "[keystone_authtoken]

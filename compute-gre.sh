@@ -26,7 +26,7 @@ GLANCE_HOST=${CONTROLLER_HOST}
 nova_compute_install() {
 
 	# Install some packages:
-	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc
+	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth
 	sudo apt-get install -y vlan bridge-utils
 	sudo apt-get install -y libvirt-bin pm-utils sysfsutils
 	sudo service ntp restart
@@ -195,16 +195,16 @@ keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_host=${MY_IP}
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_host=${CONTROLLER_HOST}
+novncproxy_base_url=http://${CONTROLLER_HOST}:6080/vnc_auto.html
 novncproxy_port=6080
 
 xvpvncproxy_port=6081
-xvpvncproxy_host=${MY_IP}
-xvpvncproxy_base_url=http://${MY_IP}:6081/console
+xvpvncproxy_host=${CONTROLLER_HOST}
+xvpvncproxy_base_url=http://${CONTROLLER_HOST}:6081/console
 
 vncserver_proxyclient_address=${MY_IP}
-vncserver_listen=${MY_IP}
+vncserver_listen=0.0.0.0
 
 EOF
 

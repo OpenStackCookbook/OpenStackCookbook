@@ -77,15 +77,15 @@ sudo ip link set eth3 promisc on
 # Assign IP to br-ex so it is accessible
 sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
 
-# Neutron
+# Quantum
 sudo apt-get install -y neutron-plugin-openvswitch-agent python-cinderclient
 
-# Configure Neutron
+# Configure Quantum
 # /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
 reconnect_interval = 2
-sql_connection=mysql://neutron:openstack@${CONTROLLER_HOST}/neutron
+connection=mysql://neutron:openstack@${CONTROLLER_HOST}/neutron
 [AGENT]
 # Agent's polling interval in seconds
 polling_interval = 2
@@ -102,19 +102,23 @@ root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 " | sudo tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 
+# Configure Neutron
 sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
 sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
 sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
 sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/quantum/neutron.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
+sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
+sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
+
 
 echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
-# Restart Neutron Services
+# Restart Quantum Services
 service neutron-plugin-openvswitch-agent restart
 
 
@@ -153,12 +157,12 @@ ec2_private_dns_show_ip=True
 
 # Network settings
 network_api_class=nova.network.neutronv2.api.API
-neutron_url=http://${MY_IP}:9696
+neutron_url=http://${CONTROLLER_HOST}:9696
 neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
+neutron_admin_auth_url=http://${CONTROLLER_HOST}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver

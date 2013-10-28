@@ -71,15 +71,17 @@ firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewal
 " | tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 
 # /etc/neutron/dhcp_agent.ini 
-#echo "root_helper = sudo neutron-rootwrap /etc/quantum/rootwrap.conf" >> /etc/quantum/dhcp_agent.ini
+#echo "root_helper = sudo neutron-rootwrap /etc/neutron/rootwrap.conf" >> /etc/neutron/dhcp_agent.ini
 echo "root_helper = sudo" >> /etc/neutron/dhcp_agent.ini
+
+sed -i 's/.*OVSInterfaceDriver.*/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/' /etc/neutron/dhcp_agent.ini 
 
 echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 
-# Configure Quantum
+# Configure Neutron
 sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
 sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
 sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
@@ -88,12 +90,13 @@ sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
 sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
-sudo sed -i "s,^connection.*,connection = mysql://neutron:openstack@${CONTROLLER_HOST}/neutron," /etc/neutron/neutron.conf
-sudo sed -i "s,^sql_connection.*,sql_connection = mysql://neutron:openstack@${CONTROLLER_HOST}/neutron," /etc/neutron/dhcp_agent.ini
-sudo sed -i "s/# interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/g" /etc/neutron/l3_agent.ini
+sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
 
-# Restart Quantum Services
+
+# Restart Neutron Services
 service neutron-plugin-openvswitch-agent restart
+
+
 
 # /etc/neutron/l3_agent.ini
 echo "
@@ -106,9 +109,12 @@ metadata_ip = ${CONTROLLER_HOST}
 metadata_port = 8775
 use_namespaces = True" | tee -a /etc/neutron/l3_agent.ini
 
+#
+sed -i 's/.*OVSInterfaceDriver.*/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/' /etc/neutron/l3_agent.ini 
+
 # Metadata Agent
 echo "[DEFAULT]
-auth_url = http://${KEYSTONE_ENDPOINT}:35357/v2.0
+auth_url = http://172.16.0.200:35357/v2.0
 auth_region = RegionOne
 admin_tenant_name = service
 admin_user = neutron

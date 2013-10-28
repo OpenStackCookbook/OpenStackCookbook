@@ -173,7 +173,7 @@ keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --pu
 # Neutron Network Service
 NEUTRON_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
 
-PUBLIC="http://$ENDPOINT:9696/"
+PUBLIC="http://$ENDPOINT:9696"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
@@ -256,6 +256,12 @@ admin_tenant_name = service
 admin_user = glance
 admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
+
+sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,\
+               glance.store.http.Store,\
+               glance.store.rbd.Store,\
+               glance.store.s3.Store,\
+               glance.store.swift.Store/' /etc/glance/glance-api.conf
 
 # glance-api.conf
 echo "[keystone_authtoken]
@@ -371,7 +377,7 @@ cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 # /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
-sql_connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
+connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
 [OVS]
 tenant_network_type=gre
 tunnel_id_ranges=1:1000
@@ -394,7 +400,7 @@ sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/
 sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
 sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
 sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
-sudo sed -i "s,^sql_connection.*,sql_connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
+sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
 
 echo "
 Defaults !requiretty
@@ -461,7 +467,7 @@ neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
+neutron_admin_auth_url=http://${MY_IP}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 #firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver

@@ -22,7 +22,7 @@ sudo apt-get -y install vlan bridge-utils dnsmasq-base dnsmasq-utils
 
 sudo apt-get -y install openvswitch-switch openvswitch-datapath-dkms
 
-sudo apt-get -y install quantum-dhcp-agent   quantum-l3-agent quantum-plugin-openvswitch quantum-plugin-openvswitch-agent 
+sudo apt-get -y install neutron-dhcp-agent   neutron-l3-agent neutron-plugin-openvswitch neutron-plugin-openvswitch-agent 
 
 sudo /etc/init.d/openvswitch-switch start
 
@@ -43,14 +43,14 @@ sudo ovs-vsctl add-port br-eth2 eth2
 
 # Configuration
 
-# /etc/quantum/api-paste.ini
-rm -f /etc/quantum/api-paste.ini
-cp /vagrant/files/quantum/api-paste.ini /etc/quantum/api-paste.ini
+# /etc/neutron/api-paste.ini
+rm -f /etc/neutron/api-paste.ini
+cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 
-# /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+# /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
-sql_connection=mysql://quantum:openstack@172.16.0.200/quantum
+sql_connection=mysql://neutron:openstack@172.16.0.200/neutron
 reconnect_interval = 2
 
 [OVS]
@@ -62,61 +62,61 @@ bridge_mappings = ph-eth2:br-eth2
 network_vlan_ranges = ph-eth2:1:1000
 
 [SECURITYGROUP]
-firewall_driver = quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 
 [AGENT]
-state_path = /var/run/quantum
+state_path = /var/run/neutron
 debug = False
 verbose = False
-" | tee -a /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+" | tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 
-# /etc/quantum/dhcp_agent.ini 
-#echo "root_helper = sudo quantum-rootwrap /etc/quantum/rootwrap.conf" >> /etc/quantum/dhcp_agent.ini
-echo "root_helper = sudo" >> /etc/quantum/dhcp_agent.ini
+# /etc/neutron/dhcp_agent.ini 
+#echo "root_helper = sudo neutron-rootwrap /etc/neutron/rootwrap.conf" >> /etc/neutron/dhcp_agent.ini
+echo "root_helper = sudo" >> /etc/neutron/dhcp_agent.ini
 
 echo "
 Defaults !requiretty
-quantum ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
+neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 
 # Configure Quantum
-sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
-sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/quantum/quantum.conf
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
 
 
 
 # Restart Quantum Services
-service quantum-plugin-openvswitch-agent restart
+service neutron-plugin-openvswitch-agent restart
 
 
 
-# /etc/quantum/l3_agent.ini
+# /etc/neutron/l3_agent.ini
 echo "
 auth_url = http://172.16.0.200:35357/v2.0
 auth_region = RegionOne
 admin_tenant_name = service
-admin_user = quantum
-admin_password = quantum
-use_namespaces = True" | tee -a /etc/quantum/l3_agent.ini
+admin_user = neutron
+admin_password = neutron
+use_namespaces = True" | tee -a /etc/neutron/l3_agent.ini
 
 # Metadata Agent
 echo "[DEFAULT]
 auth_url = http://172.16.0.200:35357/v2.0
 auth_region = RegionOne
 admin_tenant_name = service
-admin_user = quantum
-admin_password = quantum
+admin_user = neutron
+admin_password = neutron
 metadata_proxy_shared_secret = helloOpenStack
 nova_metadata_ip = 172.16.0.200
 nova_metadata_port = 8775
-" > /etc/quantum/metadata_agent.ini
+" > /etc/neutron/metadata_agent.ini
 
-sudo service quantum-plugin-openvswitch-agent restart
-sudo service quantum-dhcp-agent restart
-sudo service quantum-l3-agent restart
-sudo service quantum-metadata-agent restart
+sudo service neutron-plugin-openvswitch-agent restart
+sudo service neutron-dhcp-agent restart
+sudo service neutron-l3-agent restart
+sudo service neutron-metadata-agent restart

@@ -26,7 +26,7 @@ GLANCE_HOST=${CONTROLLER_HOST}
 nova_compute_install() {
 
 	# Install some packages:
-	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc
+	sudo apt-get -y install nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-consoleauth nova-novncproxy
 	sudo apt-get install -y vlan bridge-utils
 	sudo apt-get install -y libvirt-bin pm-utils sysfsutils
 	sudo service ntp restart
@@ -153,12 +153,12 @@ ec2_private_dns_show_ip=True
 
 # Network settings
 network_api_class=nova.network.quantumv2.api.API
-quantum_url=http://${MY_IP}:9696
+quantum_url=http://${CONTROLLER_HOST}:9696
 quantum_auth_strategy=keystone
 quantum_admin_tenant_name=service
 quantum_admin_username=quantum
 quantum_admin_password=quantum
-quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+quantum_admin_auth_url=http://${CONTROLLER_HOST}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -191,16 +191,16 @@ keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_host=${MY_IP}
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_host=${CONTROLLER_HOST}
+novncproxy_base_url=http://${CONTROLLER_HOST}:6080/vnc_auto.html
 novncproxy_port=6080
 
 xvpvncproxy_port=6081
-xvpvncproxy_host=${MY_IP}
-xvpvncproxy_base_url=http://${MY_IP}:6081/console
+xvpvncproxy_host=${CONTROLLER_HOST}
+xvpvncproxy_base_url=http://${CONTROLLER_HOST}:6081/console
 
 vncserver_proxyclient_address=${MY_IP}
-vncserver_listen=${MY_IP}
+vncserver_listen=0.0.0.0
 
 EOF
 

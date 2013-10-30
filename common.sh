@@ -41,8 +41,12 @@ fi
 sudo apt-get update
 # Havana Goodness
 sudo apt-get -y install ubuntu-cloud-keyring
-echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
-echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/havana main" | sudo tee -a /etc/apt/sources.list.d/havana.list
+H_SOURCES="/etc/apt/sources.list.d/havana.list"
+if [[ ! -f ${H_SOURCES} ]]
+then
+	echo "deb http://ubuntu-cloud.archive.canonical.com/ubuntu precise-updates/havana main" | sudo tee -a ${H_SOURCES}
+	echo "deb  http://ubuntu-cloud.archive.canonical.com/ubuntu precise-proposed/havana main" | sudo tee -a ${H_SOURCES}
+fi
 
 sudo apt-get update && apt-get upgrade -y
 

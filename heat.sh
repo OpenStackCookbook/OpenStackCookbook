@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 # heat.sh
 
@@ -20,7 +21,7 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'heat'@'%' = PASSWORD('$MYS
 # /etc/heat/heat.conf
 sudo sed -i 's,^connection.*,connection = mysql://heat:${MYSQL_HEAT_PASS}@${MYSQL_HOST}/heat,g' /etc/heat/heat.conf
 sudo sed -i 's/^verbose.*/verbose = True/g' /etc/heat/heat.conf
-sudo sed -i 's/^log_dir.*,log_dir = /var/log/heat,g' /etc/heat/heat.conf
+sudo sed -i 's,^log_dir.*,log_dir = /var/log/heat,g' /etc/heat/heat.conf
 
 sudo sed -i 's/127.0.0.1/'${CONTROLLER_HOST}'/g' /etc/heat/api-paste.ini
 sudo sed -i 's/%SERVICE_TENANT_NAME%/service/g' /etc/heat/api-paste.ini
@@ -33,20 +34,22 @@ heat-manage db_sync
 keystone user-create --name=heat --pass=heat --email=heat@localhost
 keystone user-role-add --user=heat --tenant=service --role=admin
 
-keystone service-create --name=heat --type=orchestration \
-  --description="Heat Orchestration API"
+keystone service-create --name=heat --type=orchestration --description="Heat Orchestration API"
+
+ORCHESTRATION_SERVICE_ID=$(keystone service-list | awk '/\ orchestration\ / {print $2}')
 
 keystone endpoint-create \
-  --service-id=the_service_id_above \
+  --service-id=${ORCHESTRATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s \
   --internalurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s \
   --adminurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s
 
-keystone service-create --name=heat-cfn --type=cloudformation \
-  --description="Heat CloudFormation API"
+keystone service-create --name=heat-cfn --type=cloudformation --description="Heat CloudFormation API"
+
+CLOUDFORMATION_SERVICE_ID=$(keystone service-list | awk '/\ cloudformation\ / {print $2}')
 
 keystone endpoint-create \
-  --service-id=the_service_id_above \
+  --service-id=${CLOUDFORMATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8000/v1 \
   --internalurl=http://${CONTROLLER_HOST}:8000/v1 \
   --adminurl=http://${CONTROLLER_HOST}:8000/v1

@@ -576,3 +576,6 @@ EOF
 
 # Hack: restart neutron again...
 service neutron-server restart
+
+# Heat
+sudo /vagrant/heat.sh

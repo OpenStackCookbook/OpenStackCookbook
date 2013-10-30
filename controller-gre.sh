@@ -501,17 +501,17 @@ auth_strategy=keystone
 keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
-#novnc_enabled=true
-#novncproxy_host=${MY_IP}
-#novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
-#novncproxy_port=6080
+novnc_enabled=true
+novncproxy_host=${MY_IP}
+novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_port=6080
 
-#xvpvncproxy_port=6081
-#xvpvncproxy_host=${MY_IP}
-#xvpvncproxy_base_url=http://${MY_IP}:6081/console
+xvpvncproxy_port=6081
+xvpvncproxy_host=${MY_IP}
+xvpvncproxy_base_url=http://${MY_IP}:6081/console
 
-#vncserver_proxyclient_address=${MY_IP}
-#vncserver_listen=${MY_IP}
+vncserver_proxyclient_address=${MY_IP}
+vncserver_listen=0.0.0.0
 
 EOF
 
@@ -579,3 +579,6 @@ service neutron-server restart
 
 # Heat
 sudo /vagrant/heat.sh
+
+# Ceilometer
+sudo /vagrant/ceilometer.sh

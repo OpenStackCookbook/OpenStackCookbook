@@ -1,6 +1,4 @@
 #!/bin/bash
-set -x
-
 # heat.sh
 
 # Authors: Kevin Jackson (@itarchitectkev)

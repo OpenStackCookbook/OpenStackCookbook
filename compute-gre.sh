@@ -7,7 +7,7 @@
 
 # Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
 # Website: http://www.openstackcookbook.com/
-# Suitable for OpenStack Grizzly
+# Suitable for OpenStack Havana
 
 # There are lots of bits adapted from:
 # https://github.com/mseknibilel/OpenStack-Grizzly-Install-Guide/blob/OVS_MultiNode/OpenStack_Grizzly_Install_Guide.rst
@@ -223,6 +223,10 @@ EOF
 	sudo nova-manage db sync
 }
 
+nova_ceilometer() {
+	/vagrant/ceilometer-compute.sh
+}
+
 nova_restart() {
 	for P in $(ls /etc/init/nova* | cut -d'/' -f4 | cut -d'.' -f1)
 	do
@@ -234,4 +238,5 @@ nova_restart() {
 # Main
 nova_compute_install
 nova_configure
+nova_ceilometer
 nova_restart

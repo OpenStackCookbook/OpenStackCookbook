@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# common.sh
+#  common.sh
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)

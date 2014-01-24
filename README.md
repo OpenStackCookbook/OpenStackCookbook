@@ -21,7 +21,7 @@ Quick Start<br>
 git clone https://github.com/uksysadmin/OpenStackCookbook.git<br>
 cd OpenStackCookbook<br>
 vagrant up<br>
-vagrant ssh controller
+vagrant ssh controller<br>
 . /vagrant/openrc<br>
 nova list<br>
 nova image-list

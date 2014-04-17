@@ -38,9 +38,9 @@ ORCHESTRATION_SERVICE_ID=$(keystone service-list | awk '/\ orchestration\ / {pri
 
 keystone endpoint-create \
   --service-id=${ORCHESTRATION_SERVICE_ID} \
-  --publicurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s \
-  --internalurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s \
-  --adminurl=http://${CONTROLLER_HOST}:8004/v1/%\(tenant_id\)s
+  --publicurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
+  --internalurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
+  --adminurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s
 
 keystone service-create --name=heat-cfn --type=cloudformation --description="Heat CloudFormation API"
 
@@ -48,7 +48,7 @@ CLOUDFORMATION_SERVICE_ID=$(keystone service-list | awk '/\ cloudformation\ / {p
 
 keystone endpoint-create \
   --service-id=${CLOUDFORMATION_SERVICE_ID} \
-  --publicurl=http://${CONTROLLER_HOST}:8000/v1 \
+  --publicurl=http://${CONTROLLER_HOST}:8000/v1/ \
   --internalurl=http://${CONTROLLER_HOST}:8000/v1 \
   --adminurl=http://${CONTROLLER_HOST}:8000/v1
 

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 # ceilometer-compute.sh
 

@@ -12,15 +12,6 @@ sudo apt-get -y install ceilometer-api ceilometer-collector ceilometer-agent-cen
 
 sudo service mongodb restart
 
-# Ceilometer uses MongoDB
-
-echo 'db.addUser( { user: "ceilometer",
-              pwd: "openstack",
-              roles: [ "readWrite", "dbAdmin" ]
-            } );' | tee -a /tmp/ceilometer.js
-
-mongo ceilometer /tmp/ceilometer.js
-
 # Configure Ceilometer
 # /etc/ceilometer/ceilometer.conf
 sudo sed -i "s/^#backend.*/backend=mongodb/g" /etc/ceilometer/ceilometer.conf
@@ -48,12 +39,25 @@ METERING_SERVICE_ID=$(keystone service-list | awk '/\ metering\ / {print $2}')
 
 keystone endpoint-create \
   --service-id=${METERING_SERVICE_ID} \
-  --publicurl=http://${CONTROLLER_HOST}:8777/ \
-  --internalurl=http://${CONTROLLER_HOST}:8777/ \
-  --adminurl=http://${CONTROLLER_HOST}:8777/
+  --publicurl=http://${CONTROLLER_HOST}:8777 \
+  --internalurl=http://${CONTROLLER_HOST}:8777 \
+  --adminurl=http://${CONTROLLER_HOST}:8777
+
+# Ceilometer uses MongoDB
+
+echo 'db.addUser( { user: "ceilometer",
+              pwd: "openstack",
+              roles: [ "readWrite", "dbAdmin" ]
+            } );' | tee -a /tmp/ceilometer.js
+
+mongo ceilometer /tmp/ceilometer.js
+
+service mongodb restart
+
+sleep 2
 
 service ceilometer-agent-central restart
 sleep 1
-service ceilometer-api restart
-sleep 1
 service ceilometer-collector restart
+sleep 1
+service ceilometer-api restart

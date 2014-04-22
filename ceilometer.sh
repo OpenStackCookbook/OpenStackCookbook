@@ -38,6 +38,7 @@ keystone service-create --name=ceilometer --type=metering --description="Ceilome
 METERING_SERVICE_ID=$(keystone service-list | awk '/\ metering\ / {print $2}')
 
 keystone endpoint-create \
+  --region regionOne \
   --service-id=${METERING_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8777 \
   --internalurl=http://${CONTROLLER_HOST}:8777 \

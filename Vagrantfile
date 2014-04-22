@@ -17,8 +17,8 @@ Vagrant.configure("2") do |config|
     #config.proxy.no_proxy = "localhost,127.0.0.1"
 
 
-    config.vm.box = "precise64"
-    config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+    config.vm.box = "trusty64"
+    config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
     #Default is 2200..something, but port 2200 is used by forescout NAC agent.
     config.vm.usable_port_range= 2800..2900 
@@ -58,11 +58,13 @@ Vagrant.configure("2") do |config|
 		    if prefix == "compute"
                     	vbox.customize ["modifyvm", :id, "--memory", 2048]
                         vbox.customize ["modifyvm", :id, "--cpus", 2]
+			vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
 			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
 		    elsif prefix == "controller"
 		        vbox.customize ["modifyvm", :id, "--memory", 2048]
 		    elsif prefix == "network"
 		        vbox.customize ["modifyvm", :id, "--memory", 1024]
+			vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
 			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
 		    elsif prefix == "proxy"
 		        vbox.customize ["modifyvm", :id, "--memory", 512]

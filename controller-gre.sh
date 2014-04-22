@@ -60,7 +60,7 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'keystone'@'%' = PASSWORD('
 
 sudo sed -i "s#^connection.*#connection = mysql://keystone:openstack@${MYSQL_HOST}/keystone#" /etc/keystone/keystone.conf
 
-sudo sed -i 's/^# admin_token.*/admin_token = ADMIN/' /etc/keystone/keystone.conf
+sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' /etc/keystone/keystone.conf
 
 sudo stop keystone
 sudo start keystone
@@ -132,7 +132,7 @@ PUBLIC="http://$ENDPOINT:8774/v2/\$(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # OpenStack Compute EC2 API
 EC2_SERVICE_ID=$(keystone service-list | awk '/\ ec2\ / {print $2}')
@@ -141,7 +141,7 @@ PUBLIC="http://$ENDPOINT:8773/services/Cloud"
 ADMIN="http://$ENDPOINT:8773/services/Admin"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Glance Image Service
 GLANCE_SERVICE_ID=$(keystone service-list | awk '/\ glance\ / {print $2}')
@@ -150,7 +150,7 @@ PUBLIC="http://$ENDPOINT:9292/v1"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Keystone OpenStack Identity Service
 KEYSTONE_SERVICE_ID=$(keystone service-list | awk '/\ keystone\ / {print $2}')
@@ -159,11 +159,10 @@ PUBLIC="http://$ENDPOINT:5000/v2.0"
 ADMIN="http://$ENDPOINT:35357/v2.0"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
-controller
 #CINDER_ENDPOINT="172.16.0.211"
 #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
 CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
@@ -171,7 +170,7 @@ PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Neutron Network Service
 NEUTRON_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
@@ -180,7 +179,7 @@ PUBLIC="http://$ENDPOINT:9696"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Service Tenant
 keystone tenant-create --name service --description "Service Tenant" --enabled true
@@ -248,6 +247,7 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'glance'@'%' = PASSWORD('$MYSQL_GLANCE_PASS');"
 
 # glance-api-paste.ini
+cp /etc/glance/glance-api-paste.ini{,.bak}
 echo "service_protocol = http
 service_host = ${MY_IP}
 service_port = 5000
@@ -260,13 +260,13 @@ admin_user = glance
 admin_password = glance
 " | sudo tee -a /etc/glance/glance-api-paste.ini
 
+cp /etc/glance/glance-api.conf{,.bak}
 sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,\
                glance.store.http.Store,\
-               glance.store.rbd.Store,\
-               glance.store.s3.Store,\
                glance.store.swift.Store/' /etc/glance/glance-api.conf
 
 # glance-api.conf
+cp /etc/glance/glance-api-paste.ini{,.bak}
 echo "[keystone_authtoken]
 service_protocol = http
 service_host = ${MY_IP}
@@ -284,6 +284,7 @@ flavor = keystone
 " | sudo tee -a /etc/glance/glance-api.conf
 
 # glance-registry-paste.ini
+cp /etc/glance/glance-registry-paste.ini{,.bak}
 echo "service_protocol = http
 service_host = ${MY_IP}
 service_port = 5000
@@ -297,6 +298,7 @@ admin_password = glance
 " | sudo tee -a /etc/glance/glance-registry-paste.ini
 
 # glance-registry.conf
+cp /etc/glance/glance-registry.conf{,.bak}
 echo "[keystone_authtoken]
 service_protocol = http
 service_host = ${MY_IP}
@@ -374,10 +376,12 @@ keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $NEUTRON_USER_I
 
 sudo apt-get -y install neutron-server neutron-plugin-openvswitch 
 # /etc/neutron/api-paste.ini
+cp /etc/neutron/api-paste.ini{,.bak}
 rm -f /etc/neutron/api-paste.ini
 cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 
 # /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
+cp /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini{,.bak}
 echo "
 [DATABASE]
 connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
@@ -395,6 +399,7 @@ firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewal
 
 
 # Configure Neutron
+cp /etc/neutron/neutron.conf{,.bak}
 sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
 sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
 sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
@@ -518,6 +523,7 @@ vncserver_listen=0.0.0.0
 
 EOF
 
+cp ${NOVA_CONF} ${NOVA_CONF}.bak
 sudo rm -f $NOVA_CONF
 sudo mv /tmp/nova.conf $NOVA_CONF
 sudo chmod 0640 $NOVA_CONF

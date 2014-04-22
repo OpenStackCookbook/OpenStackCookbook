@@ -128,7 +128,7 @@ PUBLIC="http://$ENDPOINT:8774/v2/\$(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # OpenStack Compute EC2 API
 EC2_SERVICE_ID=$(keystone service-list | awk '/\ ec2\ / {print $2}')
@@ -137,7 +137,7 @@ PUBLIC="http://$ENDPOINT:8773/services/Cloud"
 ADMIN="http://$ENDPOINT:8773/services/Admin"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Glance Image Service
 GLANCE_SERVICE_ID=$(keystone service-list | awk '/\ glance\ / {print $2}')
@@ -146,7 +146,7 @@ PUBLIC="http://$ENDPOINT:9292/v1"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Keystone OpenStack Identity Service
 KEYSTONE_SERVICE_ID=$(keystone service-list | awk '/\ keystone\ / {print $2}')
@@ -155,7 +155,7 @@ PUBLIC="http://$ENDPOINT:5000/v2.0"
 ADMIN="http://$ENDPOINT:35357/v2.0"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
@@ -167,7 +167,7 @@ PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Quantum Network Service
 QUANTUM_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
@@ -176,7 +176,7 @@ PUBLIC="http://$ENDPOINT:9696/"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Service Tenant
 keystone tenant-create --name service --description "Service Tenant" --enabled true

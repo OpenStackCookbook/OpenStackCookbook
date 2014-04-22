@@ -37,6 +37,7 @@ keystone service-create --name=heat --type=orchestration --description="Heat Orc
 ORCHESTRATION_SERVICE_ID=$(keystone service-list | awk '/\ orchestration\ / {print $2}')
 
 keystone endpoint-create \
+  --region regionOne \
   --service-id=${ORCHESTRATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
   --internalurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
@@ -47,6 +48,7 @@ keystone service-create --name=heat-cfn --type=cloudformation --description="Hea
 CLOUDFORMATION_SERVICE_ID=$(keystone service-list | awk '/\ cloudformation\ / {print $2}')
 
 keystone endpoint-create \
+  --region regionOne \
   --service-id=${CLOUDFORMATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8000/v1/ \
   --internalurl=http://${CONTROLLER_HOST}:8000/v1 \

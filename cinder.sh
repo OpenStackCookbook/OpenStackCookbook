@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# iscsi.sh
+# cinder.sh
 
 # Authors: Cody Bunch (bunchc@gmail.com)
+#          Kevin Jackson (kevin@linuxservices.co.uk)
+
+# Updated for Icehouse
 
 # Source in common env vars
 . /vagrant/common.sh
@@ -16,32 +19,48 @@ sudo apt-get install -y cinder-api cinder-scheduler cinder-volume open-iscsi pyt
 # Restart services
 sudo service open-iscsi start
 
+
+# Config Files
+CINDER_CONF=/etc/cinder/cinder.conf
+
+SERVICE_TENANT=service
+CINDER_SERVICE_USER=cinder
+CINDER_SERVICE_PASS=cinder
+MYSQL_CINDER_PASS=openstack
+
 # Configure Cinder
-# /etc/cinder/api-paste.ini
-sudo sed -i 's/127.0.0.1/'${CONTROLLER_HOST}'/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_TENANT_NAME%/service/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_USER%/cinder/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_PASSWORD%/cinder/g' /etc/cinder/api-paste.ini
+cp ${CINDER_CONF}{,.bak}
 
-
-# /etc/cinder/cinder.conf
 cat > /etc/cinder/cinder.conf <<EOF
 [DEFAULT]
 rootwrap_config=/etc/cinder/rootwrap.conf
-sql_connection = mysql://cinder:openstack@${CONTROLLER_HOST}/cinder
 api_paste_config = /etc/cinder/api-paste.ini
-
 iscsi_helper=tgtadm
 volume_name_template = volume-%s
 volume_group = cinder-volumes
 verbose = True
 auth_strategy = keystone
-#osapi_volume_listen_port=5900
 
-# Add these when not using the defaults.
 rabbit_host = ${CONTROLLER_HOST}
 rabbit_port = 5672
 state_path = /var/lib/cinder/
+
+[database]
+backend=sqlalchemy
+connection = mysql://cinder:${MYSQL_CINDER_CONF}@${CONTROLLER_HOST}/cinder
+
+[keystone_authtoken]
+service_protocol = http
+service_host = ${CONTROLLER_HOST}
+service_port = 5000
+auth_host = ${CONTROLLER_HOST}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${CONTROLLER_HOST}:5000/
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${CINDER_SERVICE_USER}
+admin_password = ${CINDER_SERVICE_PASS}
+
 EOF
 
 # Sync DB
@@ -55,4 +74,4 @@ pvcreate /dev/loop2
 vgcreate cinder-volumes /dev/loop2
 
 # Restart services
-cd /etc/init.d/; for i in $( ls cinder-* ); do sudo service $i restart; done
+cd /etc/init/; for c in $( ls cinder-* | cut -d '.' -f1) ; do sudo stop $c; start $c; done

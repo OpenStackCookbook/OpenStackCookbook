@@ -7,7 +7,7 @@
 
 # Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
 # Website: http://www.openstackcookbook.com/
-# Suitable for OpenStack Grizzly
+# Scripts updated for Icehouse
 
 # Source in common env vars
 . /vagrant/common.sh
@@ -552,6 +552,7 @@ MYSQL_ROOT_PASS=openstack
 MYSQL_CINDER_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE cinder;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'172.16.0.211';"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$MYSQL_CINDER_PASS');"
 
 ###########

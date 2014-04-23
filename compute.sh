@@ -46,7 +46,7 @@ virsh net-undefine default
 # Enable Live migrate
 #sudo sed -i 's/listen_tls = 0//g' /etc/libvirt/libvirt.conf
 #listen_tcp = 1
-#auth_tcp = "none"'
+#auth_tcp = "none"
 
 # Enable libvirtd_opts
 # env libvirtd_opts="-d -l"
@@ -126,7 +126,7 @@ service neutron-plugin-openvswitch-agent restart
 NOVA_CONF=/etc/nova/nova.conf
 NOVA_API_PASTE=/etc/nova/api-paste.ini
 
-cat > /tmp/nova.conf << EOF
+cat > /tmp/nova.conf <<EOF
 [DEFAULT]
 dhcpbridge_flagfile=/etc/nova/nova.conf
 dhcpbridge=/usr/bin/nova-dhcpbridge
@@ -157,22 +157,24 @@ ec2_private_dns_show_ip=True
 
 # Network settings
 network_api_class=nova.network.neutronv2.api.API
-neutron_url=http://${CONTROLLER_HOST}:9696
+neutron_url=http://${MY_IP}:9696
 neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${CONTROLLER_HOST}:5000/v2.0
+neutron_admin_auth_url=http://${MY_IP}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
-firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
+#firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
 security_group_api=neutron
+firewall_driver=nova.virt.firewall.NoopFirewallDriver
+
+service_neutron_metadata_proxy=true
+neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-service_neutron_metadata_proxy = True
-neutron_metadata_proxy_shared_secret = foo
-#metadata_host = ${MY_IP}
-#metadata_listen = 127.0.0.1
+#metadata_host = ${MYSQL_HOST}
+#metadata_listen = ${MYSQL_HOST}
 #metadata_listen_port = 8775
 
 # Cinder #
@@ -195,22 +197,35 @@ keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_host=${CONTROLLER_HOST}
-novncproxy_base_url=http://${CONTROLLER_HOST}:6080/vnc_auto.html
+novncproxy_host=${MY_IP}
+novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
 novncproxy_port=6080
 
 xvpvncproxy_port=6081
-xvpvncproxy_host=${CONTROLLER_HOST}
-xvpvncproxy_base_url=http://${CONTROLLER_HOST}:6081/console
+xvpvncproxy_host=${MY_IP}
+xvpvncproxy_base_url=http://${MY_IP}:6081/console
 
 vncserver_proxyclient_address=${MY_IP}
 vncserver_listen=0.0.0.0
 
+[keystone_authtoken]
+service_protocol = http
+service_host = ${MY_IP}
+service_port = 5000
+auth_host = ${MY_IP}
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://${MY_IP}:5000/
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${NOVA_SERVICE_USER}
+admin_password = ${NOVA_SERVICE_PASS}
+
+
 EOF
 
-
+	cp ${NOVA_CONF} ${NOVA_CONF}.bak
 	sudo rm -f $NOVA_CONF
-	sudo mv /tmp/nova.conf $NOVA_CONF
+	sudo cp /tmp/nova.conf $NOVA_CONF
 	sudo chmod 0640 $NOVA_CONF
 	sudo chown nova:nova $NOVA_CONF
 

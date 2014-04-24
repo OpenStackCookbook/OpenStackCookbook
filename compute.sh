@@ -86,7 +86,7 @@ cat > ${NEUTRON_CONF} << EOF
 verbose = False
 debug = False
 state_path = /var/lib/neutron
-lock_path = $state_path/lock
+lock_path = \$state_path/lock
 log_dir = /var/log/neutron
 
 bind_host = 0.0.0.0
@@ -252,7 +252,7 @@ vncserver_listen=0.0.0.0
 service_protocol = http
 service_host = ${CONTROLLER_HOST}
 service_port = 5000
-auth_host = ${MY_IP}
+auth_host = ${CONTROLLER_HOST}
 auth_port = 35357
 auth_protocol = http
 auth_uri = http://${CONTROLLER_HOST}:5000/

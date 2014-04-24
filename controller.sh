@@ -364,13 +364,12 @@ NEUTRON_CONF=/etc/neutron/neutron.conf
 NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 
 # Configure Neutron
-cp ${NEUTRON_CONF}{,.bak}
 cat > ${NEUTRON_CONF} << EOF
 [DEFAULT]
 verbose = False
 debug = False
 state_path = /var/lib/neutron
-lock_path = $state_path/lock
+lock_path = \$state_path/lock
 log_dir = /var/log/neutron
 
 bind_host = 0.0.0.0

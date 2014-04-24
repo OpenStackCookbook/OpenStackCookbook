@@ -69,7 +69,7 @@ cat > ${NEUTRON_CONF} << EOF
 verbose = False
 debug = False
 state_path = /var/lib/neutron
-lock_path = $state_path/lock
+lock_path = \$state_path/lock
 log_dir = /var/log/neutron
 
 bind_host = 0.0.0.0

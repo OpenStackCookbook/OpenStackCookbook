@@ -47,7 +47,7 @@ state_path = /var/lib/cinder/
 
 [database]
 backend=sqlalchemy
-connection = mysql://cinder:${MYSQL_CINDER_CONF}@${CONTROLLER_HOST}/cinder
+connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
 service_protocol = http

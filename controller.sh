@@ -46,9 +46,9 @@ character-set-server = utf8" > /etc/mysql/conf.d/01-utf8.cnf
 sudo restart mysql
 
 # Ensure root can do its job
-mysql -u root --password=${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"localhost\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
-mysql -u root --password=${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"${MYSQL_HOST}\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
-mysql -u root --password=${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"%\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"localhost\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"${MYSQL_HOST}\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"%\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
 
 mysqladmin -uroot -p${MYSQL_ROOT_PASS} flush-privileges
 
@@ -65,8 +65,8 @@ KEYSTONE_CONF=/etc/keystone/keystone.conf
 MYSQL_ROOT_PASS=openstack
 MYSQL_KEYSTONE_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE keystone;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'keystone'@'%' = PASSWORD('$MYSQL_KEYSTONE_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '$MYSQL_KEYSTONE_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '$MYSQL_KEYSTONE_PASS';"
 
 sudo sed -i "s#^connection.*#connection = mysql://keystone:${MYSQL_KEYSTONE_PASS}@${MYSQL_HOST}/keystone#" ${KEYSTONE_CONF}
 sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' ${KEYSTONE_CONF}
@@ -261,8 +261,8 @@ GLANCE_SERVICE_PASS=glance
 MYSQL_ROOT_PASS=openstack
 MYSQL_GLANCE_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE glance;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'glance'@'%' = PASSWORD('$MYSQL_GLANCE_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY '$MYSQL_GLANCE_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY '$MYSQL_GLANCE_PASS';"
 
 ## /etc/glance/glance-api.conf
 sudo cp ${GLANCE_API_CONF}{,.bak}
@@ -292,8 +292,8 @@ sudo sed -i 's/^#known_stores.*/known_stores = glance.store.filesystem.Store,\
 
 sudo sed -i "s/127.0.0.1/$KEYSTONE_ENDPOINT/g" $GLANCE_REGISTRY_CONF
 sudo sed -i "s/%SERVICE_TENANT_NAME%/$SERVICE_TENANT/g" $GLANCE_REGISTRY_CONF
-sudo sed -i "s/%SERVICE_USER%/$GLANCE_SERVICE_USER/g" $GLANCE_API_CONF
-sudo sed -i "s/%SERVICE_PASSWORD%/$GLANCE_SERVICE_PASS/g" $GLANCE_API_CONF
+sudo sed -i "s/%SERVICE_USER%/$GLANCE_SERVICE_USER/g" $GLANCE_REGISTRY_CONF
+sudo sed -i "s/%SERVICE_PASSWORD%/$GLANCE_SERVICE_PASS/g" $GLANCE_REGISTRY_CONF
 
 sudo sed -i "s,^#connection.*,connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," ${GLANCE_REGISTRY_CONF}
 
@@ -350,55 +350,126 @@ glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=b
 # Create database
 MYSQL_ROOT_PASS=openstack
 MYSQL_NEUTRON_PASS=openstack
+NEUTRON_SERVICE_USER=nova
+NEUTRON_SERVICE_PASS=nova
+
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE neutron;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'neutron'@'%' = PASSWORD('$MYSQL_NEUTRON_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '$MYSQL_NEUTRON_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY '$MYSQL_NEUTRON_PASS';"
 
 # List the new user and role assigment
 keystone user-list --tenant-id $SERVICE_TENANT_ID
 keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $NEUTRON_USER_ID
 
-sudo apt-get -y install neutron-server neutron-plugin-openvswitch 
-# /etc/neutron/api-paste.ini
-cp /etc/neutron/api-paste.ini{,.bak}
-rm -f /etc/neutron/api-paste.ini
-cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
+sudo apt-get -y install neutron-server neutron-plugin-ml2
 
-# /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
-cp /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini{,.bak}
-echo "
-[DATABASE]
-connection=mysql://neutron:openstack@${MYSQL_HOST}/neutron
-[OVS]
-tenant_network_type=gre
-tunnel_id_ranges=1:1000
-integration_bridge=br-int
-tunnel_bridge=br-tun
-enable_tunneling=True
-
-[SECURITYGROUP]
-# Firewall driver for realizing neutron security group function
-firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-" | sudo tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
-
+# Config Files
+NEUTRON_CONF=/etc/neutron/neutron.conf
+NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 
 # Configure Neutron
-cp /etc/neutron/neutron.conf{,.bak}
-sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
-sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
-sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
-sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
-sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
-sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
-sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
-sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
+cp ${NEUTRON_CONF}{,.bak}
+cat > ${NEUTRON_CONF} << EOF
+[DEFAULT]
+verbose = False
+debug = False
+state_path = /var/lib/neutron
+lock_path = $state_path/lock
+log_dir = /var/log/neutron
+
+bind_host = 0.0.0.0
+bind_port = 9696
+
+# Plugin
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = True
+
+# auth
+auth_strategy = keystone
+
+# RPC configuration options. Defined in rpc __init__
+# The messaging module to use, defaults to kombu.
+rpc_backend = neutron.openstack.common.rpc.impl_kombu
+
+rabbit_host = ${CONTROLLER_HOST}
+rabbit_password = guest
+rabbit_port = 5672
+rabbit_userid = guest
+rabbit_virtual_host = /
+rabbit_ha_queues = false
+
+# ============ Notification System Options =====================
+notification_driver = neutron.openstack.common.notifier.rpc_notifier
+
+# ======== neutron nova interactions ==========
+notify_nova_on_port_status_changes = True
+notify_nova_on_port_data_changes = True
+nova_url = http://${CONTROLLER_HOST}:8774/v2
+nova_region_name = regionOne
+nova_admin_username = ${NOVA_SERVICE_USER}
+nova_admin_tenant_id = ${SERVICE_TENANT_ID}
+nova_admin_password = ${NOVA_SERVICE_PASS}
+nova_admin_auth_url = http://${CONTROLLER_HOST}:35357/v2.0
+
+[quotas]
+# quota_driver = neutron.db.quota_db.DbQuotaDriver
+# quota_items = network,subnet,port
+# default_quota = -1
+# quota_network = 10
+# quota_subnet = 10
+# quota_port = 50
+# quota_security_group = 10
+# quota_security_group_rule = 100
+# quota_vip = 10
+# quota_pool = 10
+# quota_member = -1
+# quota_health_monitor = -1
+# quota_router = 10
+# quota_floatingip = 50
+
+[agent]
+root_helper = sudo
+
+[keystone_authtoken]
+auth_host = ${CONTROLLER_HOST}
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${NEUTRON_SERVICE_USER}
+admin_password = ${NEUTRON_SERVICE_PASS}
+signing_dir = \$state_path/keystone-signing
+
+[database]
+connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
+
+[service_providers]
+#service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+
+EOF
+
+
+cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
+[ml2]
+type_drivers = gre
+tenant_network_types = gre
+mechanism_drivers = openvswitch
+
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
+
+[securitygroup]
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+enable_security_group = True
+EOF
 
 echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
-sudo service neutron-server restart
+sudo service neutron-server stop
+sudo service neutron-server start
 
 ######################
 # Chapter 3 COMPUTE  #
@@ -415,16 +486,16 @@ NOVA_SERVICE_PASS=nova
 MYSQL_ROOT_PASS=openstack
 MYSQL_NOVA_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE nova;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'nova'@'%' = PASSWORD('$MYSQL_NOVA_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost' IDENTIFIED BY '$MYSQL_NOVA_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY '$MYSQL_NOVA_PASS';"
 
 sudo apt-get -y install rabbitmq-server nova-novncproxy novnc nova-api nova-ajax-console-proxy nova-cert nova-conductor nova-consoleauth nova-doc nova-scheduler python-novaclient dnsmasq nova-objectstore
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
-NOVA_API_PASTE=/etc/nova/api-paste.ini
 
-cat > /tmp/nova.conf <<EOF
+cp ${NOVA_CONF}{,.bak}
+cat > ${NOVA_CONF} <<EOF
 [DEFAULT]
 dhcpbridge_flagfile=/etc/nova/nova.conf
 dhcpbridge=/usr/bin/nova-dhcpbridge
@@ -443,7 +514,7 @@ connection_type=libvirt
 libvirt_type=qemu
 
 # Database
-sql_connection=mysql://nova:openstack@${MYSQL_HOST}/nova
+sql_connection=mysql://nova:${MYSQL_NOVA_PASS}@${MYSQL_HOST}/nova
 
 # Messaging
 rabbit_host=${MYSQL_HOST}
@@ -513,7 +584,7 @@ service_port = 5000
 auth_host = ${MY_IP}
 auth_port = 35357
 auth_protocol = http
-auth_uri = http://${MY_IP}:5000/
+auth_uri = http://${MY_IP}:35357/
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
@@ -521,9 +592,6 @@ admin_password = ${NOVA_SERVICE_PASS}
 
 EOF
 
-cp ${NOVA_CONF} ${NOVA_CONF}.bak
-sudo rm -f $NOVA_CONF
-sudo mv /tmp/nova.conf $NOVA_CONF
 sudo chmod 0640 $NOVA_CONF
 sudo chown nova:nova $NOVA_CONF
 
@@ -551,9 +619,8 @@ sudo start nova-novncproxy
 MYSQL_ROOT_PASS=openstack
 MYSQL_CINDER_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE cinder;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'172.16.0.211';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'cinder'@'%' = PASSWORD('$MYSQL_CINDER_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY '$MYSQL_CINDER_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY '$MYSQL_CINDER_PASS';"
 
 ###########
 # Horizon #

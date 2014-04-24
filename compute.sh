@@ -250,12 +250,12 @@ vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
 service_protocol = http
-service_host = ${MY_IP}
+service_host = ${CONTROLLER_HOST}
 service_port = 5000
 auth_host = ${MY_IP}
 auth_port = 35357
 auth_protocol = http
-auth_uri = http://${MY_IP}:5000/
+auth_uri = http://${CONTROLLER_HOST}:5000/
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}

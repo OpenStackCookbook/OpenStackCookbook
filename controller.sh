@@ -57,7 +57,7 @@ mysqladmin -uroot -p${MYSQL_ROOT_PASS} flush-privileges
 ######################
 
 # Create database
-sudo apt-get -y install keystone python-keyring
+sudo apt-get -y install ntp keystone python-keyring
 
 # Config Files
 KEYSTONE_CONF=/etc/keystone/keystone.conf
@@ -634,6 +634,25 @@ sudo dpkg --purge openstack-dashboard-ubuntu-theme
 
 # Set default role
 sudo sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${MY_IP}\"/g" /etc/openstack-dashboard/local_settings.py
+
+# Move /horizon to /
+sudo sed -i "s@LOGIN_URL.*@LOGIN_URL='/auth/login/'@g" /etc/openstack-dashboard/local_settings.py
+sudo sed -i "s@LOGOUT_URL.*@LOGOUT_URL='/auth/logout/'@g" /etc/openstack-dashboard/local_settings.py
+sudo sed -i "s@LOGIN_REDIRECT_URL.*@LOGIN_REDIRECT_URL='/'@g" /etc/openstack-dashboard/local_settings.py
+
+# Apache Conf
+cat > /etc/apache2/conf-enabled/openstack-dashboard.conf << EOF
+WSGIScriptAlias / /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi
+WSGIDaemonProcess horizon user=horizon group=horizon processes=3 threads=10
+WSGIProcessGroup horizon
+Alias /static /usr/share/openstack-dashboard/openstack_dashboard/static/
+<Directory /usr/share/openstack-dashboard/openstack_dashboard/wsgi>
+  Order allow,deny
+  Allow from all
+</Directory>
+EOF
+
+service apache2 restart
 
 # Create a .stackrc file
 cat > /vagrant/openrc <<EOF

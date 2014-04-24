@@ -20,6 +20,6 @@ instance_usage_audit_period=hour
 notify_on_state_change=vm_and_task_state
 notification_driver=nova.openstack.common.notifier.rpc_notifier" | sudo tee -a /etc/nova/nova.conf
 
-cd /etc/init.d
-ls nova-* | while read S; do stop $S; start $S; done
+cd /etc/init
+ls nova* | cut -d '.' -f1 | while read S; do stop $S; start $S; done
 service ceilometer-agent-compute restart

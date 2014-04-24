@@ -12,20 +12,22 @@ nodes = {
 
 Vagrant.configure("2") do |config|
     
-    #config.proxy.http     = "http://192.168.1.1:3128/"
-    #config.proxy.https    = "http://192.168.1.1:3128/"
-    #config.proxy.no_proxy = "localhost,127.0.0.1"
-
-
     config.vm.box = "trusty64"
     config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
     #Default is 2200..something, but port 2200 is used by forescout NAC agent.
     config.vm.usable_port_range= 2800..2900 
 
-    # Sync folder for proxy cache
-    # config.vm.synced_folder "apt-cacher-ng/", "/var/cache/apt-cacher-ng"
-
+    if Vagrant.has_plugin?("vagrant-cachier")
+        config.cache.scope = :box
+        config.cache.enable :apt
+        config.cache.synced_folder_opts = {
+            type: :nfs,
+            mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
+        }
+    else
+        puts "[-] WARN: This would be much faster if you ran vagrant plugin install vagrant-cachier first"
+    end
 
     nodes.each do |prefix, (count, ip_start)|
         count.times do |i|

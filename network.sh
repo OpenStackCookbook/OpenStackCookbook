@@ -16,15 +16,17 @@
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
-sudo sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
-sudo sysctl net.ipv4.ip_forward=1
+echo "net.ipv4.ip_forward=1
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.default.rp_filter=0" | tee -a /etc/sysctl.conf
+sysctl -p
 
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install linux-headers-`uname -r`
 sudo apt-get -y install vlan bridge-utils dnsmasq-base dnsmasq-utils
-sudo apt-get -y install openvswitch-switch openvswitch-datapath-dkms
-sudo apt-get -y install neutron-dhcp-agent neutron-l3-agent neutron-plugin-openvswitch neutron-plugin-openvswitch-agent 
+sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent
+
 sudo /etc/init.d/openvswitch-switch start
 
 # Edit the /etc/network/interfaces file for eth2?
@@ -50,80 +52,122 @@ sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
 
 # Configuration
 
-# /etc/neutron/api-paste.ini
-rm -f /etc/neutron/api-paste.ini
-cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
+# Config Files
+NEUTRON_CONF=/etc/neutron/neutron.conf
+NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
+NEUTRON_L3_AGENT_INI=/etc/neutron/l3_agent.ini
+NEUTRON_DHCP_AGENT_INI=/etc/neutron/dhcp_agent.ini
+NEUTRON_METADATA_AGENT_INI=/etc/neutron/metadata_agent.ini
 
-echo "
-[DATABASE]
-sql_connection=mysql://neutron:openstack@${CONTROLLER_HOST}/neutron
-[OVS]
-tenant_network_type=gre
-tunnel_id_ranges=1:1000
-integration_bridge=br-int
-tunnel_bridge=br-tun
-local_ip=${MY_IP}
-enable_tunneling=True
-root_helper = sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf
-[SECURITYGROUP]
-# Firewall driver for realizing neutron security group function
+SERVICE_TENANT=service
+NEUTRON_SERVICE_USER=neutron
+NEUTRON_SERVICE_PASS=neutron
+
+# Configure Neutron
+cat > ${NEUTRON_CONF} << EOF
+[DEFAULT]
+verbose = False
+debug = False
+state_path = /var/lib/neutron
+lock_path = $state_path/lock
+log_dir = /var/log/neutron
+
+bind_host = 0.0.0.0
+bind_port = 9696
+
+# Plugin
+core_plugin = ml2
+service_plugins = router
+allow_overlapping_ips = True
+
+# auth
+auth_strategy = keystone
+
+# RPC configuration options. Defined in rpc __init__
+# The messaging module to use, defaults to kombu.
+rpc_backend = neutron.openstack.common.rpc.impl_kombu
+
+rabbit_host = ${CONTROLLER_HOST}
+rabbit_password = guest
+rabbit_port = 5672
+rabbit_userid = guest
+rabbit_virtual_host = /
+rabbit_ha_queues = false
+
+# ============ Notification System Options =====================
+notification_driver = neutron.openstack.common.notifier.rpc_notifier
+
+[agent]
+root_helper = sudo
+
+[keystone_authtoken]
+auth_host = ${CONTROLLER_HOST}
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${NEUTRON_SERVICE_USER}
+admin_password = ${NEUTRON_SERVICE_PASS}
+signing_dir = \$state_path/keystone-signing
+
+[database]
+connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
+
+[service_providers]
+#service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+
+EOF
+
+cat > ${NEUTRON_L3_AGENT_INI} << EOF
+[DEFAULT]
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+EOF
+
+cat > ${NEUTRON_DHCP_AGENT_INI} << EOF
+[DEFAULT]
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
+use_namespaces = True
+EOF
+
+cat > ${NEUTRON_METADATA_AGENT_INI} << EOF
+[DEFAULT]
+auth_url = http://${CONTROLLER_HOST}:5000/v2.0
+auth_region = regionOne
+admin_tenant_name = service
+admin_user = ${NEUTRON_SERVICE_USER}
+admin_password = ${NEUTRON_SERVICE_PASS}
+nova_metadata_ip = ${CONTROLLER_HOST}
+metadata_proxy_shared_secret = foo
+EOF
+
+cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
+[ml2]
+type_drivers = gre
+tenant_network_types = gre
+mechanism_drivers = openvswitch
+
+[ml2_type_gre]
+tunnel_id_ranges = 1:1000
+
+[ovs]
+local_ip = ${MY_IP}
+tunnel_type = gre
+enable_tunneling = True
+
+[securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-" | tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
+enable_security_group = True
+EOF
 
-# /etc/neutron/dhcp_agent.ini 
-#echo "root_helper = sudo neutron-rootwrap /etc/neutron/rootwrap.conf" >> /etc/neutron/dhcp_agent.ini
-echo "root_helper = sudo" >> /etc/neutron/dhcp_agent.ini
-
-sed -i 's/.*OVSInterfaceDriver.*/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/' /etc/neutron/dhcp_agent.ini 
 
 echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 
-# Configure Neutron
-sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
-sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
-sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
-sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
-sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
-sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
-sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
-sudo sed -i "s,^connection.*,connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${MYSQL_HOST}/neutron," /etc/neutron/neutron.conf
-
-
 # Restart Neutron Services
-service neutron-plugin-openvswitch-agent restart
-
-
-
-# /etc/neutron/l3_agent.ini
-echo "
-auth_url = http://${KEYSTONE_ENDPOINT}:35357/v2.0
-auth_region = regionOne
-admin_tenant_name = service
-admin_user = neutron
-admin_password = neutron
-metadata_ip = ${CONTROLLER_HOST}
-metadata_port = 8775
-use_namespaces = True" | tee -a /etc/neutron/l3_agent.ini
-
-#
-sed -i 's/.*OVSInterfaceDriver.*/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/' /etc/neutron/l3_agent.ini 
-
-# Metadata Agent
-echo "[DEFAULT]
-auth_url = http://172.16.0.200:35357/v2.0
-auth_region = regionOne
-admin_tenant_name = service
-admin_user = neutron
-admin_password = neutron
-metadata_proxy_shared_secret = foo
-nova_metadata_ip = ${CONTROLLER_HOST}
-nova_metadata_port = 8775
-" > /etc/neutron/metadata_agent.ini
-
 sudo service neutron-plugin-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
 sudo service neutron-l3-agent restart

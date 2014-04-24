@@ -322,26 +322,22 @@ export OS_NO_CACHE=1
 # Get the images
 # First check host
 CIRROS="cirros-0.3.0-x86_64-disk.img"
-UBUNTU="precise-server-cloudimg-amd64-disk1.img"
+UBUNTU="trusty-server-cloudimg-amd64-disk1.img"
 
 if [[ ! -f /vagrant/${CIRROS} ]]
 then
         # Download then store on local host for next time
-	wget --quiet http://${APT_PROXY}:${APT_PROXY_PORT}/cirros-0.3.0-x86_64-disk.img 
-else
-	cp /vagrant/${CIRROS} .
+	wget --quiet https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img -O /vagrant/${CIRROS}
 fi
 
 if [[ ! -f /vagrant/${UBUNTU} ]]
 then
         # Download then store on local host for next time
-	wget --quiet http://${APT_PROXY}:${APT_PROXY_PORT}/precise-server-cloudimg-amd64-disk1.img       
-else
-	cp /vagrant/${UBUNTU} .
+	wget --quiet http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img -O /vagrant/${UBUNTU}
 fi
 
-glance image-create --name='Ubuntu 12.04 x86_64 Server' --disk-format=qcow2 --container-format=bare --public < precise-server-cloudimg-amd64-disk1.img
-glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=bare --public < cirros-0.3.0-x86_64-disk.img
+glance image-create --name='trusty-image' --disk-format=qcow2 --container-format=bare --public < /vagrant/${UBUNTU}
+glance image-create --name='cirros-image' --disk-format=qcow2 --container-format=bare --public < /vagrant/${CIRROS}
 
 #####################
 # Neutron           #
@@ -350,8 +346,8 @@ glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=b
 # Create database
 MYSQL_ROOT_PASS=openstack
 MYSQL_NEUTRON_PASS=openstack
-NEUTRON_SERVICE_USER=nova
-NEUTRON_SERVICE_PASS=nova
+NEUTRON_SERVICE_USER=neutron
+NEUTRON_SERVICE_PASS=neutron
 
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE neutron;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '$MYSQL_NEUTRON_PASS';"

@@ -44,10 +44,12 @@ rm -f /vagrant/demokey
 cp demokey /vagrant
 
 UBUNTU=$(nova image-list \
-  | awk '/\ Ubuntu\ / {print $2}')
+  | awk '/\ trusty/ {print $2}')
 
 
-nova boot --flavor 1 --image ${UBUNTU} --key_name demokey test1
+NET_ID=$(neutron net-list | awk '/cookbook_network_1/ {print $2}')
+
+nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
 
 neutron net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
 

@@ -12,16 +12,15 @@ sudo apt-get -y install heat-api heat-api-cfn heat-engine
 MYSQL_ROOT_PASS=openstack
 MYSQL_HEAT_PASS=openstack
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE heat;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON heat.* TO 'heat'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'heat'@'%' = PASSWORD('$MYSQL_HEAT_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON heat.* TO 'heat'@'%' IDENTIFIED BY '$MYSQL_HEAT_PASS';"
 
 # Configure Heat
 # /etc/heat/heat.conf
-sudo sed -i 's,^connection.*,connection = mysql://heat:${MYSQL_HEAT_PASS}@${MYSQL_HOST}/heat,g' /etc/heat/heat.conf
+sudo sed -i "s,^connection.*,connection = mysql://heat:${MYSQL_HEAT_PASS}@${MYSQL_HOST}/heat,g" /etc/heat/heat.conf
 sudo sed -i 's/^verbose.*/verbose = True/g' /etc/heat/heat.conf
 sudo sed -i 's,^log_dir.*,log_dir = /var/log/heat,g' /etc/heat/heat.conf
 
-sudo sed -i 's/127.0.0.1/'${CONTROLLER_HOST}'/g' /etc/heat/api-paste.ini
+sudo sed -i "s/127.0.0.1/${CONTROLLER_HOST}/g" /etc/heat/api-paste.ini
 sudo sed -i 's/%SERVICE_TENANT_NAME%/service/g' /etc/heat/api-paste.ini
 sudo sed -i 's/%SERVICE_USER%/heat/g' /etc/heat/api-paste.ini
 sudo sed -i 's/%SERVICE_PASSWORD%/heat/g' /etc/heat/api-paste.ini

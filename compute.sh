@@ -285,3 +285,6 @@ nova_compute_install
 nova_configure
 nova_ceilometer
 nova_restart
+
+# Keys
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys

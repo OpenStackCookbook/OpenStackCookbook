@@ -7,7 +7,7 @@
 
 # Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
 # Website: http://www.openstackcookbook.com/
-# Suitable for OpenStack Grizzly
+# Scripts updated for Icehouse!
 
 #
 # Sets up common bits used in each build script.
@@ -30,14 +30,8 @@ export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
 export MONGO_KEY=MongoFoo
 
-if [[ ! -z "$APT_PROXY" ]]
-then
-	echo 'Acquire::http { Proxy "http://'${APT_PROXY}:${APT_PROXY_PORT}'"; };' | sudo tee /etc/apt/apt.conf.d/01apt-cacher-ng-proxy
-fi
-
-sudo apt-get update
-# Havana Goodness
-sudo apt-get -y install ubuntu-cloud-keyring
+#sudo apt-get update
+#sudo apt-get -y install ubuntu-cloud-keyring
 sudo apt-get update && apt-get upgrade -y
 
 if [[ "$(egrep CookbookHosts /etc/hosts | awk '{print $2}')" -eq "" ]]

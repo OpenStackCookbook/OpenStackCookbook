@@ -17,7 +17,7 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON heat.* TO 'heat'@'%'
 # Configure Heat
 
 HEAT_CONF=/etc/heat/heat.conf
-cat > HEAT_CONF <<EOF
+cat > $HEAT_CONF <<EOF
 [DEFAULT]
 
 #

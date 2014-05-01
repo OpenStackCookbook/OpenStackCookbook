@@ -348,6 +348,8 @@ MYSQL_ROOT_PASS=openstack
 MYSQL_NEUTRON_PASS=openstack
 NEUTRON_SERVICE_USER=neutron
 NEUTRON_SERVICE_PASS=neutron
+NOVA_SERVICE_USER=nova
+NOVA_SERVICE_PASS=nova
 
 mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE neutron;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY '$MYSQL_NEUTRON_PASS';"
@@ -366,8 +368,8 @@ NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 # Configure Neutron
 cat > ${NEUTRON_CONF} << EOF
 [DEFAULT]
-verbose = False
-debug = False
+verbose = True
+debug = True
 state_path = /var/lib/neutron
 lock_path = \$state_path/lock
 log_dir = /var/log/neutron

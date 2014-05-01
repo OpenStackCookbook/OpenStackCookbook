@@ -66,8 +66,8 @@ NEUTRON_SERVICE_PASS=neutron
 # Configure Neutron
 cat > ${NEUTRON_CONF} << EOF
 [DEFAULT]
-verbose = False
-debug = False
+verbose = True
+debug = True
 state_path = /var/lib/neutron
 lock_path = \$state_path/lock
 log_dir = /var/log/neutron

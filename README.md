@@ -1,8 +1,18 @@
-Vagrant scripts used by the OpenStack Cloud Computing Cookbook 2nd Edition<br>
-Authors: Kevin Jackson (@itarchitectkev)  & Cody Bunch (@cody_bunch)<br>
-<br>
-SCRIPTS NOW UPDATED FOR ICEHOUSE!<br>
-<br>
+## OpenStack Cloud Computing Cookbook 2nd Edition
+#### Supporting vagrant scripts
+## Buy The Book
+More information http://www.openstackcookbook.com/
+Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edition/book
+And at your favourite online store!
+
+## Authors 
+Kevin Jackson (@itarchitectkev)
+Cody Bunch (@cody_bunch)
+
+## Updates
+SCRIPTS NOW UPDATED FOR <b>ICEHOUSE</b>!
+
+## About The Book
 The book covers:
 * Understand, install, configure, and manage Nova, the OpenStack cloud compute resource
 * Dive headfirst into managing software defined networks with the OpenStack networking project and Open vSwitch
@@ -13,32 +23,34 @@ The book covers:
 * Explore different monitoring frameworks to ensure your OpenStack cloud is always online and performing optimally
 * Automate your installations using Vagrant, Chef, and Puppet
 * Create custom Windows and Linux images for use in your private cloud environment.
-<br>
-Website: http://www.openstackcookbook.com/<br>
-Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edition/book<br>
-Or on Amazon UK: http://t.co/qlJsxjexx8 <br>
-<br>
-<br>
-Requirements:
-* Vagrant 1.4+
-* VirtualBox 4.3+
-<br>
-<br>To use vagrant-cachier:
-<br>  vagrant plugin install vagrant-cachier
-<br>
-<br>
-Quick Start<br>
-git clone https://github.com/OpenStackCookbook/OpenStackCookbook.git<br>
-cd OpenStackCookbook<br>
-git checkout icehouse<br>
-vagrant up<br>
+
+## Usage
+### Requirements
+* Vagrant 1.4+ http://www.vagrantup.com/
+* VirtualBox 4.3+ http://www.virtualbox.org/
+
+### vagrant-cachier (optional but recommended)
+```bash
+vagrant plugin install vagrant-cachier
+```
+### Quick Start
+```bash
+git clone https://github.com/OpenStackCookbook/OpenStackCookbook.git
+cd OpenStackCookbook
+git checkout icehouse
+vagrant up
+```
+### Using OpenStack
+```bash
 vagrant ssh controller
-. /vagrant/openrc<br>
-nova service list<br>
-nova list<br>
-nova image-list<br>
-neutron agent-list<br>
+. /vagrant/openrc
+nova service list
+nova list
+nova image-list
+neutron agent-list
 neutron net-list
-<br>
-OpenStack Dashboard (Horizon) is available at http://172.16.0.200/
-<br>
+```
+You can quickly run a demo script that creates a private tenant network, a floating network with a router and launches an instance running Ubuntu by issuing the following
+```bash
+/vagrant/demo/sh
+```

@@ -1,8 +1,8 @@
 ## OpenStack Cloud Computing Cookbook 2nd Edition
 #### Supporting vagrant scripts
 ## Buy The Book
-More information http://www.openstackcookbook.com/
-Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edition/book
+More information http://www.openstackcookbook.com/<br>
+Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edition/book<br>
 And at your favourite online store!
 
 ## Authors 
@@ -54,3 +54,5 @@ You can quickly run a demo script that creates a private tenant network, a float
 ```bash
 /vagrant/demo.sh
 ```
+### More information
+Check out the blog post: http://openstackr.wordpress.com/2014/05/01/openstack-cloud-computing-cookbook-the-icehouse-scripts/

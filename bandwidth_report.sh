@@ -14,7 +14,7 @@ TMP_FILE=/tmp/bytes.txt
 
 
 # Networks
-NETWORKS="192"
+NETWORKS="flatNet"
 
 # Prep
 

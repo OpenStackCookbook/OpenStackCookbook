@@ -6,15 +6,15 @@
 #
 # Install 'bc' (apt-get install bc)
 
-DATE_START=$(date --date="0 month -$(($(date +%d)-1)) days" "+%FT%T")
-FRIENDLY_DATE_START=$(date -u --date="0 month -$(($(date +%d)-1)) days")
+DATE_START=$(date --date="0 month -$(($(date +%-d)-1)) days" "+%FT%T")
+FRIENDLY_DATE_START=$(date -u --date="0 month -$(($(date +%-d)-1)) days")
 DATE_NOW=$(date "+%FT%T")
 FRIENDLY_DATE_NOW=$(date -u)
 TMP_FILE=/tmp/bytes.txt
 
 
 # Networks
-NETWORKS="flatNet"
+NETWORKS="192"
 
 # Prep
 
@@ -39,8 +39,13 @@ for N in ${NETWORKS}; do
 		done
 	done
 
+	if [[ ! -f /tmp/bytes.txt ]]
+	then
+		echo "No data collected for ${NETWORK_INFO}"
+		exit -1
+	fi
+
 	BYTES=$(sed /tmp/bytes.txt -e ':a;N;$!ba;s/\n/+/g' | bc)
 
 	echo "${NETWORK_INFO} Bytes: ${BYTES}"
 done
-

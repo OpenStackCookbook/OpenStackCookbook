@@ -72,6 +72,9 @@ sudo sed -i "s#^connection.*#connection = mysql://keystone:${MYSQL_KEYSTONE_PASS
 sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' ${KEYSTONE_CONF}
 sudo sed -i 's,^#log_dir.*,log_dir = /var/log/keystone,' ${KEYSTONE_CONF}
 
+sudo echo "use_syslog = True" >> ${KEYSTONE_CONF}
+sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${KEYSTONE_CONF}
+
 sudo stop keystone
 sudo start keystone
 
@@ -277,6 +280,9 @@ sudo sed -i "s/%SERVICE_PASSWORD%/$GLANCE_SERVICE_PASS/g" $GLANCE_API_CONF
 
 sudo sed -i "s,^#connection.*,connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," ${GLANCE_API_CONF}
 
+sudo echo "use_syslog = True" >> ${GLANCE_API_CONF}
+sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${GLANCE_API_CONF}
+
 echo "
 [paste_deploy]
 config_file = /etc/glance/glance-api-paste.ini
@@ -296,6 +302,9 @@ sudo sed -i "s/%SERVICE_USER%/$GLANCE_SERVICE_USER/g" $GLANCE_REGISTRY_CONF
 sudo sed -i "s/%SERVICE_PASSWORD%/$GLANCE_SERVICE_PASS/g" $GLANCE_REGISTRY_CONF
 
 sudo sed -i "s,^#connection.*,connection = mysql://glance:${MYSQL_GLANCE_PASS}@${MYSQL_HOST}/glance," ${GLANCE_REGISTRY_CONF}
+
+sudo echo "use_syslog = True" >> ${GLANCE_REGISTRY_CONF}
+sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${GLANCE_REGISTRY_CONF}
 
 echo "
 [paste_deploy]
@@ -502,6 +511,9 @@ lock_path=/var/lock/nova
 root_helper=sudo nova-rootwrap /etc/nova/rootwrap.conf
 verbose=True
 
+use_syslog = True
+syslog_log_facility = LOG_LOCAL0
+
 api_paste_config=/etc/nova/api-paste.ini
 enabled_apis=ec2,osapi_compute,metadata
 
@@ -651,6 +663,13 @@ EOF
 
 service apache2 restart
 
+# rsyslog remote connections
+sudo echo "\$ModLoad imudp" >> /etc/rsyslog.conf
+sudo echo "\$UDPServerRun 5140" >> /etc/rsyslog.conf
+sudo echo "\$ModLoad imtcp" >> /etc/rsyslog.conf
+sudo echo "\$InputTCPServerRun 5140" >> /etc/rsyslog.conf
+sudo restart rsyslog
+
 # Create a .stackrc file
 cat > /vagrant/openrc <<EOF
 export OS_TENANT_NAME=cookbook
@@ -668,10 +687,10 @@ sudo /vagrant/heat.sh
 # Ceilometer
 sudo /vagrant/ceilometer.sh
 
-
 # Sort out keys for root user
 sudo ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa
 rm -f /vagrant/id_rsa*
 sudo cp /root/.ssh/id_rsa /vagrant
 sudo cp /root/.ssh/id_rsa.pub /vagrant
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys 
+

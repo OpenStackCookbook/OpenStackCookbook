@@ -176,6 +176,9 @@ lock_path=/var/lock/nova
 root_helper=sudo nova-rootwrap /etc/nova/rootwrap.conf
 verbose=True
 
+use_syslog = True
+syslog_log_facility = LOG_LOCAL0
+
 api_paste_config=/etc/nova/api-paste.ini
 enabled_apis=ec2,osapi_compute,metadata
 
@@ -288,3 +291,7 @@ nova_restart
 
 # Keys
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+
+# Logging
+sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
+sudo restart rsyslog

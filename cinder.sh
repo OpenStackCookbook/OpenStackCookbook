@@ -39,6 +39,9 @@ iscsi_helper=tgtadm
 volume_name_template = volume-%s
 volume_group = cinder-volumes
 verbose = True
+use_syslog = True
+syslog_log_facility = LOG_LOCAL0
+
 auth_strategy = keystone
 
 rabbit_host = ${CONTROLLER_HOST}
@@ -77,3 +80,7 @@ vgcreate cinder-volumes /dev/loop2
 cd /etc/init/; for c in $( ls cinder-* | cut -d '.' -f1) ; do sudo stop $c; start $c; done
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+
+# Logging
+sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
+sudo restart rsyslog

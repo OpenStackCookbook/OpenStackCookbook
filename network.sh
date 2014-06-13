@@ -71,6 +71,8 @@ debug = True
 state_path = /var/lib/neutron
 lock_path = \$state_path/lock
 log_dir = /var/log/neutron
+use_syslog = True
+syslog_log_facility = LOG_LOCAL0
 
 bind_host = 0.0.0.0
 bind_port = 9696
@@ -174,3 +176,7 @@ sudo service neutron-l3-agent restart
 sudo service neutron-metadata-agent restart
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+
+# Logging
+sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
+sudo restart rsyslog

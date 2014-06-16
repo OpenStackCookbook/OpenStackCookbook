@@ -694,3 +694,5 @@ sudo cp /root/.ssh/id_rsa /vagrant
 sudo cp /root/.ssh/id_rsa.pub /vagrant
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys 
 
+# Logstash & Kibana
+sudo /vagrant/logstash.sh

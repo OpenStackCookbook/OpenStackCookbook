@@ -1,13 +1,13 @@
 export DEBIAN_FRONTEND=noninteractive
 # Install OpenLDAP
 echo -e " \
-slapd    slapd/internal/generated_adminpw    openstack
-slapd    slapd/password2    openstack
-slapd    slapd/internal/adminpw    openstack
-slapd    slapd/password1    openstack
+slapd    slapd/internal/generated_adminpw    password	openstack
+slapd    slapd/password2    password	openstack
+slapd    slapd/internal/adminpw    password	openstack
+slapd    slapd/password1    password	openstack
 " | sudo debconf-set-selections
 
-sudo aptitude --without-recommends install slapd ldap-utils
+sudo apt-get install -y slapd ldap-utils
 
 # Check that it's working
 sudo slapcat 

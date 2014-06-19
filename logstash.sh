@@ -79,4 +79,4 @@ service logstash restart
 
 # Configure rsyslog to puke into logstash
 sudo echo "*.*         @@localhost:9000" >> /etc/rsyslog.d/50-default.conf
-sudo restart rsyslog
+sudo service rsyslog restart

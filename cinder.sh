@@ -82,5 +82,7 @@ cd /etc/init/; for c in $( ls cinder-* | cut -d '.' -f1) ; do sudo stop $c; star
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
 # Logging
+sudo stop rsyslog
+sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
-sudo restart rsyslog
+sudo service rsyslog restart

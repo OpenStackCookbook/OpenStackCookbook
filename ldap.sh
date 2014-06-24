@@ -1,4 +1,7 @@
+#!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
+source /vagrant/openrc
+
 # Install OpenLDAP
 echo -e " \
 slapd    slapd/internal/generated_adminpw    password	openstack
@@ -12,5 +15,58 @@ sudo apt-get install -y slapd ldap-utils
 # Check that it's working
 sudo slapcat 
 
-# Configure some generic users / groups
+# Let's pull tenants out of keystone, dump them into ldap
+SUFFIX='dc=cook,dc=book'
+LDIF='/tmp/cookbook.ldif'
 
+echo -n > $LDIF
+
+# Make our OUs
+echo "dn: ou=Roles,$SUFFIX" >> $LDIF
+echo "objectclass:organizationalunit" >> $LDIF
+echo "ou: Roles" >> $LDIF
+echo "description: generic groups branch" >> $LDIF
+echo -e "\n" >> $LDIF
+
+echo "dn: ou=Users,$SUFFIX" >> $LDIF
+echo "objectclass:organizationalunit" >> $LDIF
+echo "ou: Users" >> $LDIF
+echo "description: generic groups branch" >> $LDIF
+echo -e "\n" >> $LDIF
+
+echo "dn: ou=Groups,$SUFFIX" >> $LDIF
+echo "objectclass:organizationalunit" >> $LDIF
+echo "ou: Groups" >> $LDIF
+echo "description: generic groups branch" >> $LDIF
+echo -e "\n" >> $LDIF
+
+for line in `keystone role-list | awk '($4 != "name") && ($4 != "") {print $4}'`
+do
+	CN=$line
+	echo "dn: cn=$CN,ou=Roles,$SUFFIX" >> $LDIF
+	echo "objectClass: organizationalRole" >> $LDIF
+	echo "cn: $CN" >> $LDIF
+	echo -e "\n" >> $LDIF
+done
+
+for line in `keystone user-list | awk '($4 != "name") && ($4 != "") {print $4}'`
+do
+	CN=$line
+	echo "dn: cn=$CN,ou=Users,$SUFFIX" >> $LDIF
+	echo "objectClass: inetOrgPerson" >> $LDIF
+	echo "cn: $CN" >> $LDIF
+	echo "sn: cookbook" >> $LDIF
+	echo -e "\n" >> $LDIF
+done
+
+for line in `keystone tenant-list | awk '($4 != "name") && ($4 != "") {print $4}'`
+do
+	CN=$line
+	echo "dn: cn=$CN,ou=Groups,$SUFFIX" >> $LDIF
+	echo "objectClass: groupOfNames" >> $LDIF
+	echo "member: cn=admin,$SUFFIX" >> $LDIF
+	echo "cn: $CN" >> $LDIF
+	echo -e "\n" >> $LDIF
+done
+
+cat $LDIF

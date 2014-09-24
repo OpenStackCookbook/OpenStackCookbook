@@ -58,6 +58,11 @@ auth_unix_ro = "none"
 auth_unix_rw = "none"
 EOF
 
+# configure libvirtd.conf
+cat > /etc/libvirt/libvirt.conf << EOF
+uri_default = "qemu:///system"
+EOF
+
 # restart libvirt
 sudo service libvirt-bin restart
 

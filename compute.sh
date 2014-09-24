@@ -293,6 +293,8 @@ nova_ceilometer() {
 }
 
 nova_restart() {
+	sudo stop libvirt-bin
+	sudo start libvirt-bin
 	for P in $(ls /etc/init/nova* | cut -d'/' -f4 | cut -d'.' -f1)
 	do
 		sudo stop ${P}
@@ -314,3 +316,8 @@ sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
+
+# Fudges to get around the libvirt timeout issues
+cp /vagrant/id_rsa* ~/.ssh/
+ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f1 | while read N; do stop $N; start $N; done"
+nova_restart

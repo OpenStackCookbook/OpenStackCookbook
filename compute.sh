@@ -46,6 +46,18 @@ net.ipv4.conf.all.rp_filter=0
 net.ipv4.conf.default.rp_filter=0" | tee -a /etc/sysctl.conf
 sysctl -p
 
+# configure libvirtd.conf
+cat > /etc/libvirt/libvirtd.conf << EOF
+listen_tls = 0
+listen_tcp = 1
+unix_sock_group = "libvirtd"
+unix_sock_ro_perms = "0777"
+unix_sock_rw_perms = "0770"
+unix_sock_dir = "/var/run/libvirt"
+auth_unix_ro = "none"
+auth_unix_rw = "none"
+EOF
+
 # restart libvirt
 sudo service libvirt-bin restart
 

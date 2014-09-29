@@ -309,15 +309,19 @@ nova_ceilometer
 nova_restart
 
 # Keys
+# Nova-Manage Hates Me
+ssh-keyscan controller >> ~/.ssh/known_hosts
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+
+cp /vagrant/id_rsa* ~/.ssh/
+
+sleep 90; echo "[+] Restarting nova-* on controller"
+ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f1 | while read N; do stop \$N; start \$N; done"
+sleep 30; echo "[+] Restarting nova-* on compute"
+nova_restart
 
 # Logging
 sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
-
-# Fudges to get around the libvirt timeout issues
-cp /vagrant/id_rsa* ~/.ssh/
-ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f1 | while read N; do stop $N; start $N; done"
-nova_restart

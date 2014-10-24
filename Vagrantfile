@@ -12,13 +12,11 @@ nodes = {
 Vagrant.configure("2") do |config|
     
     # Virtualbox
-    config.vm.box = "trusty64"
-    config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+    config.vm.box = "bunchc/utopic-x64"
 
     # VMware Fusion / Workstation
     config.vm.provider "vmware_fusion" do |vmware, override|
-      override.vm.box = "trusty64_fusion"
-      override.vm.box_url = "https://oss-binaries.phusionpassenger.com/vagrant/boxes/latest/ubuntu-14.04-amd64-vmwarefusion.box"
+      override.vm.box = "bunchc/utopic-x64"
       override.vm.synced_folder ".", "/vagrant", type: "nfs"
 
       # Fusion Performance Hacks

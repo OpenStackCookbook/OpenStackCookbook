@@ -310,8 +310,8 @@ nova_restart
 
 # Keys
 # Nova-Manage Hates Me
-ssh-keyscan controller >> ~/.ssh/known_hosts
 sudo mkdir /root/.ssh; sudo touch /root/.ssh/authorized_keys
+ssh-keyscan controller >> ~/.ssh/known_hosts
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
 cp /vagrant/id_rsa* ~/.ssh/

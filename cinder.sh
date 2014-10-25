@@ -79,6 +79,7 @@ vgcreate cinder-volumes /dev/loop2
 # Restart services
 cd /etc/init/; for c in $( ls cinder-* | cut -d '.' -f1) ; do sudo stop $c; start $c; done
 
+sudo mkdir /root.ssh; sudo touch /root/.ssh/authorized_keys
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
 # Logging

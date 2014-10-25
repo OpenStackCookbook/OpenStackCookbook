@@ -498,18 +498,48 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'
 sudo apt-get -y install rabbitmq-server nova-novncproxy novnc nova-api nova-ajax-console-proxy nova-cert nova-conductor nova-consoleauth nova-doc nova-scheduler python-novaclient dnsmasq nova-objectstore
 
 # Make ourselves a new rabbit.conf
-cat > /etc/rabbitmq/rabbitmq.conf <<EOF
+cat > /etc/rabbitmq/rabbitmq.config <<EOF
 %% -*- mode: erlang -*-
+
 [
  {rabbit,
   [
-
-   {tcp_listeners, [5672]},
+   {tcp_listeners, [5672]}
   ]},
 
-].
+ {kernel,
+  [
+  ]},
+ {rabbitmq_management,
+  [
+  ]},
 
+ {rabbitmq_shovel,
+  [{shovels,
+    [
+    ]}
+
+  ]},
+
+ {rabbitmq_stomp,
+  [
+  ]},
+
+ {rabbitmq_mqtt,
+  [
+  ]},
+
+ {rabbitmq_amqp1_0,
+  [
+  ]},
+
+ {rabbitmq_auth_backend_ldap,
+  [
+  ]}
+].
 EOF
+
+sudo /etc/init.d/rabbitmq-server restart
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf

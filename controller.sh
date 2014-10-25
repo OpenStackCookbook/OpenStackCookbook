@@ -498,9 +498,12 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'
 sudo apt-get -y install rabbitmq-server nova-novncproxy novnc nova-api nova-ajax-console-proxy nova-cert nova-conductor nova-consoleauth nova-doc nova-scheduler python-novaclient dnsmasq nova-objectstore
 
 # Make ourselves a new rabbit.conf
-cat > /etc/rabbitmq/rabbitmq-env.conf <<EOF
-RABBITMQ_NODE_PORT=5672
+sudo cat > /etc/rabbitmq/rabbitmq.config <<EOF
+[{rabbit, [{loopback_users, []}]}].
+EOF
 
+sudo cat > /etc/rabbitmq/rabbitmq-env.conf <<EOF
+RABBITMQ_NODE_PORT=5672
 EOF
 
 sudo /etc/init.d/rabbitmq-server restart

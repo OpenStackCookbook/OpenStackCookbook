@@ -1,0 +1,5 @@
+.vagrant/
+cirros-0.3.0-x86_64-disk.img
+id_rsa
+id_rsa.pub
+trusty-server-cloudimg-amd64-disk1.img

@@ -41,6 +41,10 @@ Vagrant.configure("2") do |config|
     if Vagrant.has_plugin?("vagrant-cachier")
         config.cache.scope = :box
         config.cache.enable :apt
+        config.cache.synced_folder_opts = {
+          type: :nfs,
+          mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
+        }
     else
         puts "[-] WARN: This would be much faster if you ran vagrant plugin install vagrant-cachier first"
     end
@@ -54,29 +58,29 @@ Vagrant.configure("2") do |config|
                 box.vm.hostname = "#{hostname}.book"
                 box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
                 box.vm.network :private_network, ip: "172.10.0.#{ip_start+i}", :netmask => "255.255.0.0" 
-		box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
+            		box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
 
                 box.vm.provision :shell, :path => "#{prefix}.sh"
 
                 # If using Fusion
                 box.vm.provider :vmware_fusion do |v|
-                    v.vmx["memsize"] = 1024
-        	    if prefix == "compute" or prefix == "controller" or prefix == "swift"
-	              	v.vmx["memsize"] = 2048
-	            end
+                  v.vmx["memsize"] = 1024
+                  if prefix == "compute" or prefix == "controller" or prefix == "swift"
+	              	  v.vmx["memsize"] = 2048
+                  end
                 end
 
                 # Otherwise using VirtualBox
                 box.vm.provider :virtualbox do |vbox|
-	            # Defaults
-                    vbox.customize ["modifyvm", :id, "--memory", 1024]
-                    vbox.customize ["modifyvm", :id, "--cpus", 1]
-		    if prefix == "compute" or prefix == "controller" or prefix == "swift"
-                    	vbox.customize ["modifyvm", :id, "--memory", 2048]
-                        vbox.customize ["modifyvm", :id, "--cpus", 2]
-			vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
-		    end
+                  # Defaults
+                  vbox.customize ["modifyvm", :id, "--memory", 1024]
+                  vbox.customize ["modifyvm", :id, "--cpus", 1]
+	                if prefix == "compute" or prefix == "controller" or prefix == "swift"
+                  	vbox.customize ["modifyvm", :id, "--memory", 2048]
+                    vbox.customize ["modifyvm", :id, "--cpus", 2]
+              			vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+              			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
+                  end
                 end
             end
         end

@@ -175,6 +175,7 @@ sudo service neutron-dhcp-agent restart
 sudo service neutron-l3-agent restart
 sudo service neutron-metadata-agent restart
 
+sudo mkdir /root/.ssh; sudo touch /root/.ssh/authorized_keys
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
 # Logging

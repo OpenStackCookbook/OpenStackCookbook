@@ -32,7 +32,7 @@
     "ssh_username": "vagrant",
     "ssh_password": "vagrant",
     "boot_wait":"5s",
-    "toos_upload_flavor": "linux",
+    "tools_upload_flavor": "linux",
     "output_directory": "ubuntu64_basebox_vmware",
     "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
     "boot_command": [

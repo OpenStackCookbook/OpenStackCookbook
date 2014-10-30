@@ -10,7 +10,7 @@ Kevin Jackson (@itarchitectkev)
 Cody Bunch (@cody_bunch)
 
 ## Updates
-SCRIPTS NOW UPDATED FOR <b>ICEHOUSE</b>!
+SCRIPTS NOW UPDATED FOR <b>JUNO</b>!
 
 ## About The Book
 The book covers:

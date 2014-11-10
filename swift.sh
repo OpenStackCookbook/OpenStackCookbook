@@ -323,7 +323,7 @@ PUBLIC_URL="http://$SWIFT_PROXY_SERVER:8080/v1/AUTH_\$(tenant_id)s"
 ADMIN_URL="http://$SWIFT_PROXY_SERVER:8080/v1/"
 INTERNAL_URL="http://$SWIFT_PROXY_SERVER:8080/v1/AUTH_\$(tenant_id)s"
 
-keystone endpoint-create --region RegionOne --service_id $ID --publicurl $PUBLIC_URL --adminurl $ADMIN_URL --internalurl $INTERNAL_URL
+keystone endpoint-create --region regionOne --service_id $ID --publicurl $PUBLIC_URL --adminurl $ADMIN_URL --internalurl $INTERNAL_URL
 
 # Get the service tenant ID
 SERVICE_TENANT_ID=$(keystone tenant-list | awk '/\ service\ / {print $2}')

@@ -37,6 +37,10 @@ neutron router-interface-add \
 nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
 nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 
+# Fix m1.tiny
+nova flavor-delete 1
+nova flavor-create m1.tiny 1 512 0 1
+
 ssh-keygen -t rsa -f demokey -N ""
 
 nova keypair-add --pub-key demokey.pub demokey

@@ -10,7 +10,7 @@ Kevin Jackson (@itarchitectkev)
 Cody Bunch (@cody_bunch)
 
 ## Updates
-SCRIPTS NOW UPDATED FOR <b>ICEHOUSE</b>!
+SCRIPTS NOW UPDATED FOR <b>JUNO</b>!
 
 ## About The Book
 The book covers:
@@ -44,7 +44,11 @@ vagrant up
 ```bash
 vagrant ssh controller
 . /vagrant/openrc
+<<<<<<< HEAD
+nova service list
+=======
 nova service-list
+>>>>>>> master
 nova list
 nova image-list
 neutron agent-list

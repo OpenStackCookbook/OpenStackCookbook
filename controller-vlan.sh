@@ -128,7 +128,7 @@ PUBLIC="http://$ENDPOINT:8774/v2/\$(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # OpenStack Compute EC2 API
 EC2_SERVICE_ID=$(keystone service-list | awk '/\ ec2\ / {print $2}')
@@ -137,7 +137,7 @@ PUBLIC="http://$ENDPOINT:8773/services/Cloud"
 ADMIN="http://$ENDPOINT:8773/services/Admin"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Glance Image Service
 GLANCE_SERVICE_ID=$(keystone service-list | awk '/\ glance\ / {print $2}')
@@ -146,7 +146,7 @@ PUBLIC="http://$ENDPOINT:9292/v1"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Keystone OpenStack Identity Service
 KEYSTONE_SERVICE_ID=$(keystone service-list | awk '/\ keystone\ / {print $2}')
@@ -155,7 +155,7 @@ PUBLIC="http://$ENDPOINT:5000/v2.0"
 ADMIN="http://$ENDPOINT:35357/v2.0"
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
@@ -166,7 +166,7 @@ PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Quantum Network Service
 QUANTUM_SERVICE_ID=$(keystone service-list | awk '/\ network\ / {print $2}')
@@ -175,7 +175,7 @@ PUBLIC="http://$ENDPOINT:9696/"
 ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
-keystone endpoint-create --region RegionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+keystone endpoint-create --region regionOne --service_id $QUANTUM_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 # Service Tenant
 keystone tenant-create --name service --description "Service Tenant" --enabled true
@@ -190,7 +190,7 @@ keystone user-create --name keystone --pass keystone --tenant_id $SERVICE_TENANT
 
 keystone user-create --name cinder --pass cinder --tenant_id $SERVICE_TENANT_ID --email cinder@localhost --enabled true
 
-keystone user-create --name quantum --pass quantum --tenant_id $SERVICE_TENANT_ID --email quantum@localhost --enabled true
+keystone user-create --name neutron --pass neutron --tenant_id $SERVICE_TENANT_ID --email neutron@localhost --enabled true
 
 # Get the nova user id
 NOVA_USER_ID=$(keystone user-list | awk '/\ nova\ / {print $2}')
@@ -219,10 +219,10 @@ CINDER_USER_ID=$(keystone user-list | awk '/\ cinder \ / {print $2}')
 # Assign the cinder user the admin role in service tenant
 keystone user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
-# Create quantum service user in the services tenant
-QUANTUM_USER_ID=$(keystone user-list | awk '/\ quantum \ / {print $2}')
+# Create neutron service user in the services tenant
+QUANTUM_USER_ID=$(keystone user-list | awk '/\ neutron \ / {print $2}')
 
-# Grant admin role to quantum service user
+# Grant admin role to neutron service user
 keystone user-role-add --user $QUANTUM_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
 
@@ -329,23 +329,23 @@ glance image-create --name='Cirros 0.3' --disk-format=qcow2 --container-format=b
 # Create database
 MYSQL_ROOT_PASS=openstack
 MYSQL_QUANTUM_PASS=openstack
-mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE quantum;'
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON quantum.* TO 'quantum'@'%';"
-mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'quantum'@'%' = PASSWORD('$MYSQL_QUANTUM_PASS');"
+mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE neutron;'
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "SET PASSWORD FOR 'neutron'@'%' = PASSWORD('$MYSQL_QUANTUM_PASS');"
 
 # List the new user and role assigment
 keystone user-list --tenant-id $SERVICE_TENANT_ID
 keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $QUANTUM_USER_ID
 
-sudo apt-get -y install quantum-server quantum-plugin-openvswitch 
-# /etc/quantum/api-paste.ini
-rm -f /etc/quantum/api-paste.ini
-cp /vagrant/files/quantum/api-paste.ini /etc/quantum/api-paste.ini
+sudo apt-get -y install neutron-server neutron-plugin-openvswitch 
+# /etc/neutron/api-paste.ini
+rm -f /etc/neutron/api-paste.ini
+cp /vagrant/files/neutron/api-paste.ini /etc/neutron/api-paste.ini
 
-# /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+# /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 echo "
 [DATABASE]
-sql_connection=mysql://quantum:openstack@172.16.0.200/quantum
+sql_connection=mysql://neutron:openstack@172.16.0.200/neutron
 reconnect_interval = 2
 
 [OVS]
@@ -357,33 +357,33 @@ bridge_mappings = ph-eth2:br-eth2
 network_vlan_ranges = ph-eth2:1:1000
 
 [SECURITYGROUP]
-firewall_driver = quantum.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 
 [AGENT]
-state_path = /var/run/quantum
+state_path = /var/run/neutron
 debug = False
 verbose = False
-" | tee -a /etc/quantum/plugins/openvswitch/ovs_quantum_plugin.ini
+" | tee -a /etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini
 
 # Configure Quantum
-sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/quantum/quantum.conf
-sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/quantum/quantum.conf
-sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = quantum/g' /etc/quantum/quantum.conf
-sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/quantum/quantum.conf
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = ${CONTROLLER_HOST}/g" /etc/neutron/neutron.conf
+sudo sed -i 's/admin_tenant_name = %SERVICE_TENANT_NAME%/admin_tenant_name = service/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_user = %SERVICE_USER%/admin_user = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/admin_password = %SERVICE_PASSWORD%/admin_password = neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/^root_helper.*/root_helper = sudo/g' /etc/neutron/neutron.conf
 
 echo "
 Defaults !requiretty
-quantum ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
+neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
-sudo service quantum-server restart
+sudo service neutron-server restart
 
 # Create a network and subnet
 #TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
-#PRIVATE_NET_ID=`quantum net-create private | awk '/ id / { print $4 }'`
-#PRIVATE_SUBNET1_ID=`quantum subnet-create --tenant-id $TENANT_ID --name private-subnet1 --ip-version 4 $PRIVATE_NET_ID 10.0.0.0/29 | awk '/ id / { print $4 }'`
+#PRIVATE_NET_ID=`neutron net-create private | awk '/ id / { print $4 }'`
+#PRIVATE_SUBNET1_ID=`neutron subnet-create --tenant-id $TENANT_ID --name private-subnet1 --ip-version 4 $PRIVATE_NET_ID 10.0.0.0/29 | awk '/ id / { print $4 }'`
 #
 ######################
 # Chapter 3 COMPUTE  #
@@ -438,20 +438,20 @@ ec2_dmz_host=${MYSQL_HOST}
 ec2_private_dns_show_ip=True
 
 # Network settings
-network_api_class=nova.network.quantumv2.api.API
-quantum_url=http://${MY_IP}:9696
-quantum_auth_strategy=keystone
-quantum_admin_tenant_name=service
-quantum_admin_username=quantum
-quantum_admin_password=quantum
-quantum_admin_auth_url=http://${MY_IP}:35357/v2.0
+network_api_class=nova.network.neutronv2.api.API
+neutron_url=http://${MY_IP}:9696
+neutron_auth_strategy=keystone
+neutron_admin_tenant_name=service
+neutron_admin_username=neutron
+neutron_admin_password=neutron
+neutron_admin_auth_url=http://${MY_IP}:35357/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
 
 #Metadata
-service_quantum_metadata_proxy = True
-quantum_metadata_proxy_shared_secret = helloOpenStack
+service_neutron_metadata_proxy = True
+neutron_metadata_proxy_shared_secret = helloOpenStack
 #metadata_host = ${MY_IP}
 #metadata_listen = 127.0.0.1
 #metadata_listen_port = 8775
@@ -544,5 +544,5 @@ export OS_AUTH_URL=http://${MY_IP}:5000/v2.0/
 EOF
 
 
-# Hack: restart quantum again...
-service quantum-server restart
+# Hack: restart neutron again...
+service neutron-server restart

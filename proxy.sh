@@ -10,8 +10,6 @@ cp -R apt-cacher-ng/ /var/cache
 chown -R apt-cacher-ng:apt-cacher-ng /var/cache/apt-cacher-ng
 
 # Setup our repo's
-sudo apt-get install python-software-properties -y
-sudo add-apt-repository ppa:ubuntu-cloud-archive/grizzly-staging
 sudo apt-get update
 sudo apt-get install iftop iptraf vim curl wget lighttpd -y
 

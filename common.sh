@@ -18,7 +18,6 @@ export DEBIAN_FRONTEND=noninteractive
 #export CONTROLLER_HOST=172.16.0.200
 #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
 export CONTROLLER_HOST=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')
-
 export GLANCE_HOST=${CONTROLLER_HOST}
 export MYSQL_HOST=${CONTROLLER_HOST}
 export KEYSTONE_ENDPOINT=${CONTROLLER_HOST}

@@ -159,7 +159,6 @@ keystone endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --
 
 # Cinder Block Storage Service
 CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
-controller
 #CINDER_ENDPOINT="172.16.0.211"
 #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
 CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')

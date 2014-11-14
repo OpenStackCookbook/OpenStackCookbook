@@ -29,9 +29,9 @@ export SERVICE_TOKEN=ADMIN
 export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
 export MONGO_KEY=MongoFoo
 
-#sudo apt-get update
-#sudo apt-get -y install ubuntu-cloud-keyring
-sudo apt-get update && apt-get upgrade -y
+sudo apt-get install -y software-properties-common ubuntu-cloud-keyring
+sudo add-apt-repository -y cloud-archive:juno
+sudo apt-get update && sudo apt-get upgrade -y
 
 if [[ "$(egrep CookbookHosts /etc/hosts | awk '{print $2}')" -eq "" ]]
 then

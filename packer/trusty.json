@@ -1,0 +1,80 @@
+{
+  "builders": [
+    {"type": "virtualbox-iso",
+    "guest_os_type": "Ubuntu_64",
+    "iso_url": "http://mirror.anl.gov/pub/ubuntu-iso/CDs-Ubuntu/trusty/ubuntu-14.04.1-server-amd64.iso",
+    "iso_checksum": "ca2531b8cd79ea5b778ede3a524779b9",
+    "iso_checksum_type":"md5",
+    "http_directory": "preseed",
+    "ssh_username": "vagrant",
+    "ssh_password": "vagrant",
+    "boot_wait":"5s",
+    "output_directory": "ubuntu64_basebox_virtualbox",
+    "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
+    "boot_command": [
+      "<esc><esc><enter><wait>",
+      "/install/vmlinuz noapic ",
+      "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+      "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+      "hostname={{ .Name }} ",
+      "fb=false debconf/frontend=noninteractive ",
+      "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+      "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+      "initrd=/install/initrd.gz -- ",
+      "<enter>"]
+    },
+    {"type": "vmware-iso",
+    "guest_os_type": "ubuntu-64",
+    "iso_url": "http://mirror.anl.gov/pub/ubuntu-iso/CDs-Ubuntu/trusty/ubuntu-14.04.1-server-amd64.iso",
+    "iso_checksum": "ca2531b8cd79ea5b778ede3a524779b9",
+    "iso_checksum_type":"md5",
+    "http_directory": "preseed",
+    "ssh_username": "vagrant",
+    "ssh_password": "vagrant",
+    "boot_wait":"5s",
+    "tools_upload_flavor": "linux",
+    "output_directory": "ubuntu64_basebox_vmware",
+    "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
+    "boot_command": [
+      "<esc><esc><enter><wait>",
+      "/install/vmlinuz noapic ",
+      "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+      "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+      "hostname={{ .Name }} ",
+      "fb=false debconf/frontend=noninteractive ",
+      "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+      "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+      "initrd=/install/initrd.gz -- ",
+      "<enter>"]
+    }],
+  "provisioners": [{
+    "type": "shell",
+    "execute_command": "echo 'vagrant' | sudo -S sh '{{ .Path }}'",
+    "inline": [
+      "apt-get update -y",
+      "apt-get install -y linux-headers-$(uname -r) build-essential dkms",
+      "apt-get clean",
+      "mount -o loop VBoxGuestAdditions.iso /media/cdrom",
+      "sh /media/cdrom/VBoxLinuxAdditions.run",
+      "umount /media/cdrom",
+      "mkdir /home/vagrant/.ssh",
+      "mkdir /root/.ssh",
+      "wget -qO- https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub >> ~/.ssh/authorized_keys",
+      "echo 'vagrant ALL=NOPASSWD:ALL' > /tmp/vagrant",
+      "chmod 0440 /tmp/vagrant",
+      "mv /tmp/vagrant /etc/sudoers.d/"
+    ]}],
+  "post-processors": [
+  {
+      "type": "vagrant",
+      "override": {
+        "virtualbox": {
+          "output": "trusty-x64-virtualbox.box"
+        },
+        "vmware": {
+          "output": "trusty-x64-vmware.box"
+        }
+      }
+    }
+  ]
+}

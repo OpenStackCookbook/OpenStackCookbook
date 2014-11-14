@@ -12,12 +12,12 @@ nodes = {
 Vagrant.configure("2") do |config|
     
     # Virtualbox
-    config.vm.box = "bunchc/utopic-x64"
+    config.vm.box = "bunchc/trusty-x64"
     config.vm.synced_folder ".", "/vagrant", type: "nfs"
 
     # VMware Fusion / Workstation
     config.vm.provider "vmware_fusion" do |vmware, override|
-      override.vm.box = "bunchc/utopic-x64"
+      override.vm.box = "bunchc/trusty-x64"
       override.vm.synced_folder ".", "/vagrant", type: "nfs"
 
       # Fusion Performance Hacks

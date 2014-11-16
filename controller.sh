@@ -93,19 +93,17 @@ sudo keystone-manage db_sync
 
 export ENDPOINT=${MY_IP}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=https://${ENDPOINT}:5000/v2.0
-#export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
 export PASSWORD=openstack
 
-exit
-
 # admin role
-keystone role-create --name admin
+keystone role-create --insecure --name admin
 
 # Member role
-keystone role-create --name Member
+keystone role-create --insecure --name Member
 
-keystone role-list
+keystone role-list --insecure 
+exit
 
 keystone tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
 

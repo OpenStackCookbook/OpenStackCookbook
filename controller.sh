@@ -71,7 +71,6 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keyst
 sudo sed -i "s#^connection.*#connection = mysql://keystone:${MYSQL_KEYSTONE_PASS}@${MYSQL_HOST}/keystone#" ${KEYSTONE_CONF}
 sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' ${KEYSTONE_CONF}
 sudo sed -i 's,^#log_dir.*,log_dir = /var/log/keystone,' ${KEYSTONE_CONF}
-
 sudo echo "use_syslog = True" >> ${KEYSTONE_CONF}
 sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${KEYSTONE_CONF}
 
@@ -84,7 +83,7 @@ sudo apt-get -y install python-keystoneclient
 
 export ENDPOINT=${MY_IP}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
 export PASSWORD=openstack
 
 # admin role

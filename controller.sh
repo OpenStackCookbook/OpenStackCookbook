@@ -97,19 +97,18 @@ export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
 export PASSWORD=openstack
 
 # admin role
-keystone role-create --insecure --name admin
+keystone --insecure role-create --name admin
 
 # Member role
-keystone role-create --insecure --name Member
+keystone --insecure role-create --name Member
 
-keystone role-list --insecure 
-exit
+keystone --insecure role-list 
 
-keystone tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
+keystone --insecure tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
 
-keystone user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
+keystone --insecure user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
 
@@ -117,11 +116,11 @@ ROLE_ID=$(keystone role-list | awk '/\ admin\ / {print $2}')
 
 USER_ID=$(keystone user-list | awk '/\ admin\ / {print $2}')
 
-keystone user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
 
 # Create the user
 PASSWORD=openstack
-keystone user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
+keystone --insecure user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
 
 TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
 
@@ -130,26 +129,26 @@ ROLE_ID=$(keystone role-list | awk '/\ Member\ / {print $2}')
 USER_ID=$(keystone user-list | awk '/\ demo\ / {print $2}')
 
 # Assign the Member role to the demo user in cookbook
-keystone user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
 
 # OpenStack Compute Nova API Endpoint
-keystone service-create --name nova --type compute --description 'OpenStack Compute Service'
+keystone --insecure service-create --name nova --type compute --description 'OpenStack Compute Service'
 
 # OpenStack Compute EC2 API Endpoint
-keystone service-create --name ec2 --type ec2 --description 'EC2 Service'
+keystone --insecure service-create --name ec2 --type ec2 --description 'EC2 Service'
 
 # Glance Image Service Endpoint
-keystone service-create --name glance --type image --description 'OpenStack Image Service'
+keystone --insecure service-create --name glance --type image --description 'OpenStack Image Service'
 
 # Keystone Identity Service Endpoint
-keystone service-create --name keystone --type identity --description 'OpenStack Identity Service'
+keystone --insecure service-create --name keystone --type identity --description 'OpenStack Identity Service'
 
 # Cinder Block Storage Endpoint
-keystone service-create --name volume --type volume --description 'Volume Service'
+keystone --insecure service-create --name volume --type volume --description 'Volume Service'
 
 # Neutron Network Service Endpoint
-keystone service-create --name network --type network --description 'Neutron Network Service'
-
+keystone --insecure service-create --name network --type network --description 'Neutron Network Service'
+exit
 # OpenStack Compute Nova API
 NOVA_SERVICE_ID=$(keystone service-list | awk '/\ nova\ / {print $2}')
 

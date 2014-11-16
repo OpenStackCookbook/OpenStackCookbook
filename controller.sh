@@ -61,6 +61,7 @@ sudo apt-get -y install ntp keystone python-keyring
 
 # Config Files
 KEYSTONE_CONF=/etc/keystone/keystone.conf
+SSL_PATH=/etc/ssl/
 
 MYSQL_ROOT_PASS=openstack
 MYSQL_KEYSTONE_PASS=openstack
@@ -73,6 +74,20 @@ sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' ${KEYSTONE_CONF}
 sudo sed -i 's,^#log_dir.*,log_dir = /var/log/keystone,' ${KEYSTONE_CONF}
 sudo echo "use_syslog = True" >> ${KEYSTONE_CONF}
 sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${KEYSTONE_CONF}
+
+mkdir -p $SSL_PATH
+openssl genrsa 2048 > $SSL_PATH/ca-key.pem
+openssl req -new -x509 -nodes -days 3600 -batch -key $SSL_PATH/ca-key.pem > $SSL_PATH/ca-cert.pem
+openssl req -newkey rsa:2048 -days 3600 -batch -nodes -keyout $SSL_PATH/server-key.pem > $SSL_PATH/server-req.pem
+openssl x509 -req -in $SSL_PATH/server-req.pem -days 3600 -CA $SSL_PATH/ca-cert.pem -CAkey $SSL_PATH/ca-key.pem -set_serial 01 > $SSL_PATH/server-cert.pem
+
+sudo echo "
+[ssl]
+enable = True
+certfile = ${SSL_PATH}/server-cert.pem
+keyfile = ${SSL_PATH}/server-key.pem
+ca_certs = ${SSL_PATH}/ca-cert.pem
+cert_required = True" >> ${KEYSTONE_CONF}
 
 sudo stop keystone
 sudo start keystone
@@ -91,6 +106,9 @@ keystone role-create --name admin
 
 # Member role
 keystone role-create --name Member
+
+keystone role-list
+exit
 
 keystone tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
 

@@ -7,7 +7,7 @@
 
 # Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
 # Website: http://www.openstackcookbook.com/
-# Scripts updated for Icehouse
+# Scripts updated for Juno
 
 # Source in common env vars
 . /vagrant/common.sh

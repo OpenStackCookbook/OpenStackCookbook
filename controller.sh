@@ -75,30 +75,26 @@ sudo sed -i 's,^#log_dir.*,log_dir = /var/log/keystone,' ${KEYSTONE_CONF}
 sudo echo "use_syslog = True" >> ${KEYSTONE_CONF}
 sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${KEYSTONE_CONF}
 
-mkdir -p $SSL_PATH
-openssl genrsa 2048 > $SSL_PATH/ca-key.pem
-openssl req -new -x509 -nodes -days 3600 -batch -key $SSL_PATH/ca-key.pem > $SSL_PATH/ca-cert.pem
-openssl req -newkey rsa:2048 -days 3600 -batch -nodes -keyout $SSL_PATH/server-key.pem > $SSL_PATH/server-req.pem
-openssl x509 -req -in $SSL_PATH/server-req.pem -days 3600 -CA $SSL_PATH/ca-cert.pem -CAkey $SSL_PATH/ca-key.pem -set_serial 01 > $SSL_PATH/server-cert.pem
+sudo apt-get -y install python-keystoneclient
+keystone-manage ssl_setup --keystone-user keystone --keystone-group keystone
 
 sudo echo "
-[ssl]
+ssl]
 enable = True
-certfile = ${SSL_PATH}/server-cert.pem
-keyfile = ${SSL_PATH}/server-key.pem
-ca_certs = ${SSL_PATH}/ca-cert.pem
-cert_required = True" >> ${KEYSTONE_CONF}
+certfile = /etc/keystone/ssl/certs/keystone.pem
+keyfile = /etc/keystone/ssl/private/keystonekey.pem
+ca_certs = /etc/keystone/ssl/certs/ca.pem
+ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 
 sudo stop keystone
 sudo start keystone
 
 sudo keystone-manage db_sync
 
-sudo apt-get -y install python-keystoneclient
-
 export ENDPOINT=${MY_IP}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:5000/v2.0
+#export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
 export PASSWORD=openstack
 
 # admin role

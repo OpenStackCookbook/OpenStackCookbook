@@ -253,7 +253,18 @@ NEUTRON_USER_ID=$(keystone --insecure user-list | awk '/\ neutron \ / {print $2}
 # Grant admin role to neutron service user
 keystone --insecure user-role-add --user $NEUTRON_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
+echo "
+######################
+# Chapter 1 Keystone #
+######################
+
+This is where the keystone chapter ends.
+Whoever is doing glance needs to remove this 
+section and the exit command, otherwise 
+things will be superbroke.
+"
 exit
+
 ######################
 # Chapter 2 GLANCE   #
 ######################

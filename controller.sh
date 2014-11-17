@@ -86,6 +86,13 @@ keyfile = /etc/keystone/ssl/private/keystonekey.pem
 ca_certs = /etc/keystone/ssl/certs/ca.pem
 ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 
+if ping -c 1 openldap
+then
+  echo "[+] Found OpenLDAP, Configuring Keystone."
+else
+   echo "[+] OpenLDAP not found, moving along."
+fi
+
 sudo stop keystone
 sudo start keystone
 

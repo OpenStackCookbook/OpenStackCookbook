@@ -38,6 +38,7 @@ then
 	# Add host entries
 	echo "
 # CookbookHosts
+172.16.0.199	openldap.book openldap
 172.16.0.200	controller.book controller
 172.16.0.201	compute.book compute
 172.16.0.202	network.book network

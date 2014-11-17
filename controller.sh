@@ -93,11 +93,83 @@ then
   configure_keystone
 else
    echo "[+] OpenLDAP not found, moving along."
-   configure_keystone_no_ldap
 fi
 
-configure_keystone_endpoints(){
-  # OpenStack Compute Nova API Endpoint
+# If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
+configure_keystone(){
+    sudo echo "
+[identity]
+driver=keystone.identity.backends.ldap.Identity
+
+[assigment]
+driver=keystone.assignment.backends.sql.Assignment
+
+[ldap]
+url = ldap://openldap
+user = dc=admin,dc=cook,dc=book
+password = openstack
+suffix = dc=openstack,dc=org
+user_tree_dn = ou=Users,dc=openstack,dc=org
+user_objectclass = inetOrgPerson
+user_id_attribute = cn
+user_mail_attribute = mail
+tenant_tree_dn = ou=Projects,dc=openstack,dc=org
+tenant_objectclass = groupOfNames
+tenant_id_attribute = cn
+tenant_desc_attribute = description
+use_dumb_member = True
+role_tree_dn = ou=Roles,dc=openstack, dc=org
+role_objectclass = organizationalRole
+role_id_attribute = cn
+role_member_attribute = roleOccupant" >> ${KEYSTONE_CONF}
+
+}
+
+sudo stop keystone
+sudo start keystone
+sudo keystone-manage db_sync
+
+export ENDPOINT=${MY_IP}
+export SERVICE_TOKEN=ADMIN
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export PASSWORD=openstack
+
+# admin role
+keystone --insecure role-create --name admin
+
+# Member role
+keystone --insecure role-create --name Member
+
+keystone --insecure role-list 
+
+keystone --insecure tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
+
+TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
+
+keystone --insecure user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
+
+TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
+
+ROLE_ID=$(keystone --insecure role-list | awk '/\ admin\ / {print $2}')
+
+USER_ID=$(keystone --insecure user-list | awk '/\ admin\ / {print $2}')
+
+keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+
+# Create the user
+PASSWORD=openstack
+keystone --insecure user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
+
+TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
+
+ROLE_ID=$(keystone --insecure role-list | awk '/\ Member\ / {print $2}')
+
+USER_ID=$(keystone --insecure user-list | awk '/\ demo\ / {print $2}')
+
+# Assign the Member role to the demo user in cookbook
+keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+
+# OpenStack Compute Nova API Endpoint
 keystone --insecure service-create --name nova --type compute --description 'OpenStack Compute Service'
 
 # OpenStack Compute EC2 API Endpoint
@@ -170,101 +242,6 @@ ADMIN=$PUBLIC
 INTERNAL=$PUBLIC
 
 keystone --insecure endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-}
-
-# If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
-configure_keystone(){
-    sudo echo "
-[identity]
-driver=keystone.identity.backends.ldap.Identity
-
-[assigment]
-driver=keystone.assignment.backends.sql.Assignment
-
-[ldap]
-url = ldap://openldap
-user = cn=admin,dc=cook,dc=book
-password = openstack
-suffix = dc=cook,dc=book
-use_dumb_member = False
-allow_subtree_delete = False
-
-user_tree_dn = ou=Users,dc=cook,dc=book
-user_objectclass = inetOrgPerson
-
-tenant_tree_dn = ou=Groups,dc=cook,dc=book
-tenant_objectclass = groupOfNames
-
-role_tree_dn = ou=Roles,dc=cook,dc=book
-role_objectclass = organizationalRole
-
-user_allow_create = False
-user_allow_update = False
-user_allow_delete = False
-
-tenant_allow_create = False
-tenant_allow_update = False
-tenant_allow_delete = False
-
-role_allow_create = False
-role_allow_update = False
-role_allow_delete = False
-  " >> ${KEYSTONE_CONF}
-  sudo stop keystone
-  sudo start keystone
-  sudo keystone-manage db_sync
-  configure_keystone_endpoints
-}
-
-# ldap doesn't like when you 'create' some things. Moved those here
-configure_keystone_no_ldap() {
-sudo stop keystone
-sudo start keystone
-sudo keystone-manage db_sync
-
-export ENDPOINT=${MY_IP}
-export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
-export PASSWORD=openstack
-
-# admin role
-keystone --insecure role-create --name admin
-
-# Member role
-keystone --insecure role-create --name Member
-
-keystone --insecure role-list 
-
-keystone --insecure tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
-
-TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
-
-keystone --insecure user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
-
-TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
-
-ROLE_ID=$(keystone --insecure role-list | awk '/\ admin\ / {print $2}')
-
-USER_ID=$(keystone --insecure user-list | awk '/\ admin\ / {print $2}')
-
-keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
-
-# Create the user
-PASSWORD=openstack
-keystone --insecure user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
-
-TENANT_ID=$(keystone --insecure tenant-list | awk '/\ cookbook\ / {print $2}')
-
-ROLE_ID=$(keystone --insecure role-list | awk '/\ Member\ / {print $2}')
-
-USER_ID=$(keystone --insecure user-list | awk '/\ demo\ / {print $2}')
-
-# Assign the Member role to the demo user in cookbook
-keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
-
-# Call this to configure all the endpoints
-configure_keystone_endpoints
 
 # Service Tenant
 keystone --insecure tenant-create --name service --description "Service Tenant" --enabled true

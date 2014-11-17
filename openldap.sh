@@ -19,14 +19,11 @@ MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
 # Set some configuration variables
 echo -e " \
-slapd    slapd/internal/generated_adminpw    password   openstack
-slapd    slapd/password2    password    openstack
-slapd    slapd/internal/adminpw    password openstack
-slapd    slapd/password1    password    openstack
+slapd	slapd/internal/adminpw	password	openstack
+slapd	slapd/internal/generated_adminpw	password	openstack
+slapd	slapd/password2	password	openstack
+slapd	slapd/password1	password	openstack
 " | sudo debconf-set-selections
 
 # Install OpenLDAP
 sudo apt-get install -y slapd ldap-utils
-
-# Is it working?
-sudo slapcat

@@ -90,8 +90,13 @@ ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 if ping -c 1 openldap
 then
   echo "[+] Found OpenLDAP, Configuring Keystone."
-  sudo sed -i "s/#driver=keystone.identity.backends.sql.Identity/driver=keystone.identity.backends.ldap.Identity/" ${KEYSTONE_CONF}
   sudo echo "
+[identity]
+driver=keystone.identity.backends.ldap.Identity
+
+[assigment]
+driver=keystone.assignment.backends.sql.Assignment
+
 [ldap]
 url = ldap://openldap
 user = cn=admin,dc=cook,dc=book

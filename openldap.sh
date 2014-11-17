@@ -29,12 +29,6 @@ slapd	slapd/password1	password	openstack
 sudo apt-get install -y slapd ldap-utils
 
 sudo echo "
-dn: dc=cook,dc=book
-dc: openstack
-objectClass: dcObject
-objectClass: organizationalUnit
-ou: openstack
-
 dn: ou=Groups,dc=cook,dc=book
 objectClass: top
 objectClass: organizationalUnit
@@ -50,4 +44,4 @@ objectClass: top
 objectClass: organizationalUnit
 ou: roles" >> /tmp/openstack.ldif
 
-ldapadd -x -W -D"cn=admin,dc=cook,dc=book" -f /tmp/openstack.ldif
+ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /tmp/openstack.ldif

@@ -57,6 +57,7 @@ NEUTRON_CONF=/etc/neutron/neutron.conf
 NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 NEUTRON_L3_AGENT_INI=/etc/neutron/l3_agent.ini
 NEUTRON_DHCP_AGENT_INI=/etc/neutron/dhcp_agent.ini
+NEUTRON_DNSMASQ_CONF=/etc/neutron/dnsmasq-neutron.conf
 NEUTRON_METADATA_AGENT_INI=/etc/neutron/metadata_agent.ini
 
 SERVICE_TENANT=service
@@ -131,6 +132,12 @@ cat > ${NEUTRON_DHCP_AGENT_INI} << EOF
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
 use_namespaces = True
+dnsmasq_config_file=${NEUTRON_DNSMASQ_CONF}
+EOF
+
+cat > ${NEUTRON_DNSMASQ_CONF}
+# To allow tunneling bytes to be appended
+dhcp-option-force=26,1400
 EOF
 
 cat > ${NEUTRON_METADATA_AGENT_INI} << EOF

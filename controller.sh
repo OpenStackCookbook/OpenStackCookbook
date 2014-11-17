@@ -89,6 +89,9 @@ ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 if ping -c 1 openldap
 then
   echo "[+] Found OpenLDAP, Configuring Keystone."
+  sudo echo "
+  cn=admin,dc=cook,dc=book
+  " >> ${KEYSTONE_CONF}
 else
    echo "[+] OpenLDAP not found, moving along."
 fi

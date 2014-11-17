@@ -86,6 +86,36 @@ keyfile = /etc/keystone/ssl/private/keystonekey.pem
 ca_certs = /etc/keystone/ssl/certs/ca.pem
 ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 
+# If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
+configure_keystone(){
+    sudo echo "
+[identity]
+driver=keystone.identity.backends.ldap.Identity
+
+[ldap]
+url = ldap://openldap
+user = dc=admin,dc=cook,dc=book
+password = openstack
+suffix = cn=cook,cn=book
+
+user_tree_dn = ou=Users,dc=cook,dc=book
+user_objectclass = inetOrgPerson
+user_id_attribute = cn
+user_mail_attribute = mail
+
+tenant_tree_dn = ou=Projects,dc=cook,dc=book
+tenant_objectclass = groupOfNames
+tenant_id_attribute = cn
+tenant_desc_attribute = description
+
+use_dumb_member = True
+
+role_tree_dn = ou=Roles,dc=cook,dc=book
+role_objectclass = organizationalRole
+role_id_attribute = cn
+role_member_attribute = roleOccupant" >> ${KEYSTONE_CONF}
+}
+
 # Check if OpenLDAP is up and running, if so, configure keystone.
 if ping -c 1 openldap
 then
@@ -94,36 +124,6 @@ then
 else
    echo "[+] OpenLDAP not found, moving along."
 fi
-
-# If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
-configure_keystone(){
-    sudo echo "
-[identity]
-driver=keystone.identity.backends.ldap.Identity
-
-[assigment]
-driver=keystone.assignment.backends.sql.Assignment
-
-[ldap]
-url = ldap://openldap
-user = dc=admin,dc=cook,dc=book
-password = openstack
-suffix = dc=openstack,dc=org
-user_tree_dn = ou=Users,dc=openstack,dc=org
-user_objectclass = inetOrgPerson
-user_id_attribute = cn
-user_mail_attribute = mail
-tenant_tree_dn = ou=Projects,dc=openstack,dc=org
-tenant_objectclass = groupOfNames
-tenant_id_attribute = cn
-tenant_desc_attribute = description
-use_dumb_member = True
-role_tree_dn = ou=Roles,dc=openstack, dc=org
-role_objectclass = organizationalRole
-role_id_attribute = cn
-role_member_attribute = roleOccupant" >> ${KEYSTONE_CONF}
-
-}
 
 sudo stop keystone
 sudo start keystone
@@ -291,7 +291,6 @@ NEUTRON_USER_ID=$(keystone --insecure user-list | awk '/\ neutron \ / {print $2}
 # Grant admin role to neutron service user
 keystone --insecure user-role-add --user $NEUTRON_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
-}
 echo "
 ######################
 # Chapter 1 Keystone #

@@ -6,9 +6,9 @@ Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edit
 And at your favourite online store!
 
 ## Authors 
-Kevin Jackson (@itarchitectkev)
-Cody Bunch (@cody_bunch)
-Egle Segler (@eglute)
+Kevin Jackson (@itarchitectkev)<br>
+Cody Bunch (@cody_bunch)<br>
+Egle Sigler (@eglute)
 
 ## Updates
 SCRIPTS NOW UPDATED FOR <b>JUNO</b>!

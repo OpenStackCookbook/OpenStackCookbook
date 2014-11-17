@@ -86,11 +86,40 @@ keyfile = /etc/keystone/ssl/private/keystonekey.pem
 ca_certs = /etc/keystone/ssl/certs/ca.pem
 ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 
+# Check if OpenLDAP is up and running, if so, configure keystone.
 if ping -c 1 openldap
 then
   echo "[+] Found OpenLDAP, Configuring Keystone."
+  sudo sed -i "s/#driver=keystone.identity.backends.sql.Identity/driver=keystone.identity.backends.ldap.Identity/" ${KEYSTONE_CONF}
   sudo echo "
-  cn=admin,dc=cook,dc=book
+[ldap]
+url = ldap://openldap
+user = cn=admin,dc=cook,dc=book
+password = openstack
+suffix = dc=cook,dc=book
+use_dumb_member = False
+allow_subtree_delete = False
+
+user_tree_dn = ou=Users,dc=cook,dc=book
+user_objectclass = inetOrgPerson
+ 
+tenant_tree_dn = ou=Groups,dc=cook,dc=book
+tenant_objectclass = groupOfNames
+ 
+role_tree_dn = ou=Roles,dc=cook,dc=book
+role_objectclass = organizationalRole
+
+user_allow_create = False
+user_allow_update = False
+user_allow_delete = False
+ 
+tenant_allow_create = False
+tenant_allow_update = False
+tenant_allow_delete = False
+ 
+role_allow_create = False
+role_allow_update = False
+role_allow_delete = False
   " >> ${KEYSTONE_CONF}
 else
    echo "[+] OpenLDAP not found, moving along."

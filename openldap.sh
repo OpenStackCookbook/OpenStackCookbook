@@ -29,19 +29,31 @@ slapd	slapd/password1	password	openstack
 sudo apt-get install -y slapd ldap-utils
 
 sudo echo "
-dn: ou=Groups,dc=cook,dc=book
-objectClass: top
+dn: dc=openstack,dc=org
+dc: openstack
+objectClass: dcObject
 objectClass: organizationalUnit
-ou: groups
+ou: openstack
 
-dn: ou=Users,dc=cook,dc=book
-objectClass: top
+dn: ou=Groups,dc=openstack,dc=org
 objectClass: organizationalUnit
-ou: users
+ou: Groups
 
-dn: ou=Roles,dc=cook,dc=book
-objectClass: top
+dn: ou=Users,dc=openstack,dc=org
 objectClass: organizationalUnit
-ou: roles" >> /tmp/openstack.ldif
+ou: Users
+
+dn: ou=Roles,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Roles
+
+dn: ou=Projects,dc=openstack,dc=org
+objectClass: organizationalUnit
+ou: Projects
+
+dn: cn=9fe2ff9ee4384b1894a90878d3e92bab,ou=Roles,dc=openstack,dc=org
+objectClass: organizationalRole
+ou: _member_
+cn: 9fe2ff9ee4384b1894a90878d3e92bab" >> /tmp/openstack.ldif
 
 ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /tmp/openstack.ldif

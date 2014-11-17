@@ -13,12 +13,12 @@ Vagrant.configure("2") do |config|
     
     # Virtualbox
     config.vm.box = "bunchc/utopic-x64"
-    config.vm.synced_folder ".", "/vagrant", type: "nfs"
+    config.vm.synced_folder ".", "/vagrant", type: "rsync"
 
     # VMware Fusion / Workstation
     config.vm.provider "vmware_fusion" do |vmware, override|
       override.vm.box = "bunchc/utopic-x64"
-      override.vm.synced_folder ".", "/vagrant", type: "nfs"
+      override.vm.synced_folder ".", "/vagrant", type: "rsync"
 
       # Fusion Performance Hacks
       vmware.vmx["logging"] = "FALSE"
@@ -43,7 +43,7 @@ Vagrant.configure("2") do |config|
         config.cache.scope = :box
         config.cache.enable :apt
         config.cache.synced_folder_opts = {
-          type: :nfs,
+          type: :rsync,
           mount_options: ['rw', 'vers=3', 'tcp', 'nolock']
         }
     else

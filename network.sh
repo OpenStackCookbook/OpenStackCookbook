@@ -135,7 +135,7 @@ use_namespaces = True
 dnsmasq_config_file=${NEUTRON_DNSMASQ_CONF}
 EOF
 
-cat > ${NEUTRON_DNSMASQ_CONF}
+cat > ${NEUTRON_DNSMASQ_CONF} << EOF
 # To allow tunneling bytes to be appended
 dhcp-option-force=26,1400
 EOF

@@ -6,3 +6,4 @@ trusty-server-cloudimg-amd64-disk1.img
 demokey
 packer_cache/
 *.box
+*.pub

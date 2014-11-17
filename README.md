@@ -1,4 +1,4 @@
-## OpenStack Cloud Computing Cookbook 2nd Edition
+## OpenStack Cloud Computing Cookbook 3rd Edition (Release 2015)
 #### Supporting vagrant scripts
 ## Buy The Book
 More information http://www.openstackcookbook.com/<br>
@@ -8,6 +8,7 @@ And at your favourite online store!
 ## Authors 
 Kevin Jackson (@itarchitectkev)
 Cody Bunch (@cody_bunch)
+Egle Segler (@eglute)
 
 ## Updates
 SCRIPTS NOW UPDATED FOR <b>JUNO</b>!
@@ -26,8 +27,8 @@ The book covers:
 
 ## Usage
 ### Requirements
-* Vagrant 1.4+ http://www.vagrantup.com/
-* VirtualBox 4.3+ http://www.virtualbox.org/
+* Vagrant 1.6+ http://www.vagrantup.com/
+* VirtualBox 4.5+ http://www.virtualbox.org/
 
 ### vagrant-cachier (optional but recommended)
 ```bash
@@ -37,7 +38,6 @@ vagrant plugin install vagrant-cachier
 ```bash
 git clone https://github.com/OpenStackCookbook/OpenStackCookbook.git
 cd OpenStackCookbook
-git checkout icehouse
 vagrant up
 ```
 ### Using OpenStack

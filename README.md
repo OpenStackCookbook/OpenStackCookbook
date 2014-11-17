@@ -37,7 +37,7 @@ vagrant plugin install vagrant-cachier
 ```bash
 git clone https://github.com/OpenStackCookbook/OpenStackCookbook.git
 cd OpenStackCookbook
-git checkout icehouse
+git checkout juno
 vagrant up
 ```
 ### Using OpenStack

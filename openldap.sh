@@ -51,4 +51,4 @@ ou: _member_
 cn: 9fe2ff9ee4384b1894a90878d3e92bab" >> /tmp/openstack.ldif
 echo "doing the add thing"
 
-ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /tmp/openstack.ldif
+ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /vagrant/cookbook.ldif

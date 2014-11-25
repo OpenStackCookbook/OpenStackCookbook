@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 nodes = {
-    'openldap'  => [1, 199],
+    #'openldap'  => [1, 199], # Commenting out so y'all can do the working on chapters thing
     'controller'  => [1, 200],
     'network'  => [1, 202],
     'compute'  => [1, 201],

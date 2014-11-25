@@ -24,7 +24,6 @@ cn: _member_
 dn: cn=admin,ou=Roles,dc=cook,dc=book
 objectClass: organizationalRole
 cn: admin
-userPassword: {SSHA}dizf2ryeRJekCIMON/H936iAmAfL1nFa
 
 dn: cn=admin,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson

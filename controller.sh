@@ -190,7 +190,10 @@ user_tree_dn = ou=Users,dc=cook,dc=book
 user_objectclass = inetOrgPerson
 user_id_attribute = cn
 user_mail_attribute = mail
-user_enabled_emulation = True
+
+user_enabled_attribute = userAccountControl
+user_enabled_mask      = 2
+user_enabled_default   = 512
 
 tenant_tree_dn = ou=Groups,dc=cook,dc=book
 tenant_objectclass = groupOfNames

@@ -28,5 +28,12 @@ slapd	slapd/password1	password	openstack
 # Install OpenLDAP
 sudo apt-get install -y slapd ldap-utils
 
+sudo echo "
+attributetype ( 1.2.840.113556.1.4.8 NAME 'userAccountControl'
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.27' )
+" >> /root/new-attributes.schema
+
+sudo echo "include /root/new-attributes.schema" >> /etc/ldap/ldap.conf
+
 # Import our users
 ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /vagrant/cookbook.ldif

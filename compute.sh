@@ -31,6 +31,7 @@ nova_compute_install() {
 
 	# Install some packages:
 	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth
+	#sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent
 	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	sudo apt-get -y install vlan bridge-utils
 	sudo apt-get -y install libvirt-bin pm-utils sysfsutils
@@ -113,6 +114,7 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
+router_distributed = True
 
 # auth
 auth_strategy = keystone
@@ -150,6 +152,13 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 #service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
 #service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 
+EOF
+
+cat > ${NEUTRON_L3_AGENT_INI} << EOF
+[DEFAULT]
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+agent_mode = dvr_snat
 EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF

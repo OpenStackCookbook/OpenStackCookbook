@@ -82,6 +82,7 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
+##router_distributed = True
 
 # auth
 auth_strategy = keystone
@@ -125,6 +126,7 @@ cat > ${NEUTRON_L3_AGENT_INI} << EOF
 [DEFAULT]
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 use_namespaces = True
+##agent_mode = dvr_snat
 EOF
 
 cat > ${NEUTRON_DHCP_AGENT_INI} << EOF
@@ -153,17 +155,20 @@ EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
-type_drivers = gre
+type_drivers = gre,vxlan
 tenant_network_types = gre
-mechanism_drivers = openvswitch
+mechanism_drivers = openvswitch,l2population
 
 [ml2_type_gre]
 tunnel_id_ranges = 1:1000
 
 [ovs]
 local_ip = ${MY_IP}
-tunnel_type = gre
+tunnel_type = vxlan
 enable_tunneling = True
+l2_population = True
+##enable_distributed_routing = True
+
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver

@@ -390,6 +390,7 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
+##router_distributed = True
 
 # auth
 auth_strategy = keystone

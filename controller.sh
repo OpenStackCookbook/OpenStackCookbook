@@ -14,6 +14,9 @@
 
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+PUBLIC_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+INT_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ADMIN_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
 #export LANG=C
 
@@ -86,6 +89,91 @@ keyfile = /etc/keystone/ssl/private/keystonekey.pem
 ca_certs = /etc/keystone/ssl/certs/ca.pem
 ca_key = /etc/keystone/ssl/certs/cakey.pem" >> ${KEYSTONE_CONF}
 
+# This runs for both LDAP and non-LDAP configs
+create_endpoints(){
+  export ENDPOINT=${PUBLIC_IP}
+  export INT_ENDPOINT=${INT_IP}
+  export ADMIN_ENDPOINT=${ADMIN_IP}
+  export SERVICE_TOKEN=ADMIN
+  export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+  export PASSWORD=openstack
+
+   # OpenStack Compute Nova API Endpoint
+  keystone --insecure service-create --name nova --type compute --description 'OpenStack Compute Service'
+
+  # OpenStack Compute EC2 API Endpoint
+  keystone --insecure service-create --name ec2 --type ec2 --description 'EC2 Service'
+
+  # Glance Image Service Endpoint
+  keystone --insecure service-create --name glance --type image --description 'OpenStack Image Service'
+
+  # Keystone Identity Service Endpoint
+  keystone --insecure service-create --name keystone --type identity --description 'OpenStack Identity Service'
+
+  # Cinder Block Storage Endpoint
+  keystone --insecure service-create --name volume --type volume --description 'Volume Service'
+
+  # Neutron Network Service Endpoint
+  keystone --insecure service-create --name network --type network --description 'Neutron Network Service'
+
+  # OpenStack Compute Nova API
+  NOVA_SERVICE_ID=$(keystone --insecure service-list | awk '/\ nova\ / {print $2}')
+
+  PUBLIC="https://$ENDPOINT:8774/v2/\$(tenant_id)s"
+  ADMIN="https://$ADMIN_ENDPOINT:8774/v2/\$(tenant_id)s"
+  INTERNAL="https://$INT_ENDPOINT:8774/v2/\$(tenant_id)s"
+
+  keystone --insecure endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+  # OpenStack Compute EC2 API
+  EC2_SERVICE_ID=$(keystone --insecure service-list | awk '/\ ec2\ / {print $2}')
+
+  PUBLIC="https://$ENDPOINT:8773/services/Cloud"
+  ADMIN="https://$ADMIN_ENDPOINT:8773/services/Admin"
+  INTERNAL="https://$INT_ENDPOINT:8773/services/Cloud"
+
+  keystone --insecure endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+  # Glance Image Service
+  GLANCE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ glance\ / {print $2}')
+
+  PUBLIC="https://$ENDPOINT:9292/v2"
+  ADMIN="https://$ADMIN_ENDPOINT:9292/v2"
+  INTERNAL="https://$INT_ENDPOINT:9292/v2"
+
+  keystone --insecure endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+  # Keystone OpenStack Identity Service
+  KEYSTONE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ keystone\ / {print $2}')
+
+  PUBLIC="https://$ENDPOINT:5000/v2.0"
+  ADMIN="https://$ADMIN_ENDPOINT:35357/v2.0"
+  INTERNAL="https://$INT_ENDPOINT:5000/v2.0"
+
+  keystone --insecure endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+  # Cinder Block Storage Service
+  CINDER_SERVICE_ID=$(keystone --insecure service-list | awk '/\ volume\ / {print $2}')
+
+  #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
+  CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
+  PUBLIC="https://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
+  ADMIN=$PUBLIC
+  INTERNAL=$PUBLIC
+
+  keystone --insecure endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+  # Neutron Network Service
+  NEUTRON_SERVICE_ID=$(keystone --insecure service-list | awk '/\ network\ / {print $2}')
+
+  PUBLIC="https://$ENDPOINT:9696"
+  ADMIN="https://$ADMIN_ENDPOINT:9696"
+  INTERNAL="https://$INT_ENDPOINT:9696"
+
+  keystone --insecure endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+
+}
+
 # If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
 configure_keystone(){
     sudo echo "
@@ -94,7 +182,7 @@ driver=keystone.identity.backends.ldap.Identity
 
 [ldap]
 url = ldap://openldap
-user = dc=admin,dc=cook,dc=book
+user = cn=admin,ou=Users,dc=cook,dc=book
 password = openstack
 suffix = cn=cook,cn=book
 
@@ -102,8 +190,9 @@ user_tree_dn = ou=Users,dc=cook,dc=book
 user_objectclass = inetOrgPerson
 user_id_attribute = cn
 user_mail_attribute = mail
+user_enabled_emulation = True
 
-tenant_tree_dn = ou=Projects,dc=cook,dc=book
+tenant_tree_dn = ou=Groups,dc=cook,dc=book
 tenant_objectclass = groupOfNames
 tenant_id_attribute = cn
 tenant_desc_attribute = description
@@ -114,23 +203,30 @@ role_tree_dn = ou=Roles,dc=cook,dc=book
 role_objectclass = organizationalRole
 role_id_attribute = cn
 role_member_attribute = roleOccupant" >> ${KEYSTONE_CONF}
+
 }
 
 # Check if OpenLDAP is up and running, if so, configure keystone.
 if ping -c 1 openldap
 then
   echo "[+] Found OpenLDAP, Configuring Keystone."
-  configure_keystone
   sudo stop keystone
   sudo start keystone
   sudo keystone-manage db_sync
+  create_endpoints
+  
+  configure_keystone
+  sudo stop keystone
+  sudo start keystone
 else
    echo "[+] OpenLDAP not found, moving along."
   sudo stop keystone
   sudo start keystone
   sudo keystone-manage db_sync
 
-  export ENDPOINT=${MY_IP}
+  export ENDPOINT=${PUBLIC_IP}
+  export INT_ENDPOINT=${INT_IP}
+  export ADMIN_ENDPOINT=${ADMIN_IP}
   export SERVICE_TOKEN=ADMIN
   export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
   export PASSWORD=openstack
@@ -170,80 +266,8 @@ else
   # Assign the Member role to the demo user in cookbook
   keystone --insecure user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
 
-  # OpenStack Compute Nova API Endpoint
-  keystone --insecure service-create --name nova --type compute --description 'OpenStack Compute Service'
-
-  # OpenStack Compute EC2 API Endpoint
-  keystone --insecure service-create --name ec2 --type ec2 --description 'EC2 Service'
-
-  # Glance Image Service Endpoint
-  keystone --insecure service-create --name glance --type image --description 'OpenStack Image Service'
-
-  # Keystone Identity Service Endpoint
-  keystone --insecure service-create --name keystone --type identity --description 'OpenStack Identity Service'
-
-  # Cinder Block Storage Endpoint
-  keystone --insecure service-create --name volume --type volume --description 'Volume Service'
-
-  # Neutron Network Service Endpoint
-  keystone --insecure service-create --name network --type network --description 'Neutron Network Service'
-
-  # OpenStack Compute Nova API
-  NOVA_SERVICE_ID=$(keystone --insecure service-list | awk '/\ nova\ / {print $2}')
-
-  PUBLIC="https://$ENDPOINT:8774/v2/\$(tenant_id)s"
-  ADMIN=$PUBLIC
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-  # OpenStack Compute EC2 API
-  EC2_SERVICE_ID=$(keystone --insecure service-list | awk '/\ ec2\ / {print $2}')
-
-  PUBLIC="https://$ENDPOINT:8773/services/Cloud"
-  ADMIN="https://$ENDPOINT:8773/services/Admin"
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-  # Glance Image Service
-  GLANCE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ glance\ / {print $2}')
-
-  PUBLIC="https://$ENDPOINT:9292/v2"
-  ADMIN=$PUBLIC
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-  # Keystone OpenStack Identity Service
-  KEYSTONE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ keystone\ / {print $2}')
-
-  PUBLIC="https://$ENDPOINT:5000/v2.0"
-  ADMIN="https://$ENDPOINT:35357/v2.0"
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-  # Cinder Block Storage Service
-  CINDER_SERVICE_ID=$(keystone --insecure service-list | awk '/\ volume\ / {print $2}')
-
-  #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
-  CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
-  PUBLIC="https://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
-  ADMIN=$PUBLIC
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
-  # Neutron Network Service
-  NEUTRON_SERVICE_ID=$(keystone --insecure service-list | awk '/\ network\ / {print $2}')
-
-  PUBLIC="https://$ENDPOINT:9696"
-  ADMIN=$PUBLIC
-  INTERNAL=$PUBLIC
-
-  keystone --insecure endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
+  create_endpoints
+ 
   # Service Tenant
   keystone --insecure tenant-create --name service --description "Service Tenant" --enabled true
 

@@ -31,9 +31,16 @@ sudo apt-get install -y slapd ldap-utils
 sudo echo "
 attributetype ( 1.2.840.113556.1.4.8 NAME 'userAccountControl'
     SYNTAX '1.3.6.1.4.1.1466.115.121.1.27' )
-" >> /root/new-attributes.schema
 
-sudo echo "include /root/new-attributes.schema" >> /etc/ldap/ldap.conf
+objectclass ( 1.2.840.113556.1.5.9 NAME 'user'
+        DESC 'a user'
+        SUP inetOrgPerson STRUCTURAL
+        MUST ( cn )
+        MAY ( userPassword $ memberOf $ userAccountControl ) )
+
+" >> /etc/ldap/schema/new-attributes.schema
+
+sudo service slapd restart
 
 # Import our users
-ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /vagrant/cookbook.ldif
+#ldapadd -x -w openstack -D"cn=admin,dc=cook,dc=book" -f /vagrant/cookbook.ldif

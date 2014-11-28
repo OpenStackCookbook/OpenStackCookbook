@@ -27,6 +27,7 @@ cn: admin
 
 dn: cn=admin,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: admin
 sn: cookbook
 userAccountControl: 512
@@ -34,6 +35,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=cinder,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: cinder
 sn: cookbook
 userAccountControl: 512
@@ -41,6 +43,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=demo,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: demo
 sn: cookbook
 userAccountControl: 512
@@ -48,6 +51,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=glance,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: glance
 sn: cookbook
 userAccountControl: 512
@@ -55,6 +59,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=keystone,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: keystone
 sn: cookbook
 userAccountControl: 512
@@ -62,6 +67,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=neutron,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: neutron
 sn: cookbook
 userAccountControl: 512
@@ -69,6 +75,7 @@ userPassword: {SSHA}RH7IM5iUbxQkTG7tZOK7ek4810RUZnz/
 
 dn: cn=nova,ou=Users,dc=cook,dc=book
 objectClass: inetOrgPerson
+objectClass: user
 cn: nova
 sn: cookbook
 userAccountControl: 512

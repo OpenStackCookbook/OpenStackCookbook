@@ -123,7 +123,7 @@ create_endpoints(){
   ADMIN="https://$ADMIN_ENDPOINT:8774/v2/\$(tenant_id)s"
   INTERNAL="https://$INT_ENDPOINT:8774/v2/\$(tenant_id)s"
 
-  keystone --insecure endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
   # OpenStack Compute EC2 API
   EC2_SERVICE_ID=$(keystone --insecure service-list | awk '/\ ec2\ / {print $2}')
@@ -132,7 +132,7 @@ create_endpoints(){
   ADMIN="https://$ADMIN_ENDPOINT:8773/services/Admin"
   INTERNAL="https://$INT_ENDPOINT:8773/services/Cloud"
 
-  keystone --insecure endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
   # Glance Image Service
   GLANCE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ glance\ / {print $2}')
@@ -141,7 +141,7 @@ create_endpoints(){
   ADMIN="https://$ADMIN_ENDPOINT:9292/v2"
   INTERNAL="https://$INT_ENDPOINT:9292/v2"
 
-  keystone --insecure endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
   # Keystone OpenStack Identity Service
   KEYSTONE_SERVICE_ID=$(keystone --insecure service-list | awk '/\ keystone\ / {print $2}')
@@ -150,7 +150,7 @@ create_endpoints(){
   ADMIN="https://$ADMIN_ENDPOINT:35357/v2.0"
   INTERNAL="https://$INT_ENDPOINT:5000/v2.0"
 
-  keystone --insecure endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
   # Cinder Block Storage Service
   CINDER_SERVICE_ID=$(keystone --insecure service-list | awk '/\ volume\ / {print $2}')
@@ -161,7 +161,7 @@ create_endpoints(){
   ADMIN=$PUBLIC
   INTERNAL=$PUBLIC
 
-  keystone --insecure endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
   # Neutron Network Service
   NEUTRON_SERVICE_ID=$(keystone --insecure service-list | awk '/\ network\ / {print $2}')
@@ -170,7 +170,7 @@ create_endpoints(){
   ADMIN="https://$ADMIN_ENDPOINT:9696"
   INTERNAL="https://$INT_ENDPOINT:9696"
 
-  keystone --insecure endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  keystone --insecure endpoint-create --region RegionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
 }
 
@@ -501,7 +501,7 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 notify_nova_on_port_status_changes = True
 notify_nova_on_port_data_changes = True
 nova_url = http://${CONTROLLER_HOST}:8774/v2
-nova_region_name = regionOne
+nova_region_name = RegionOne
 nova_admin_username = ${NOVA_SERVICE_USER}
 nova_admin_tenant_id = ${SERVICE_TENANT_ID}
 nova_admin_password = ${NOVA_SERVICE_PASS}

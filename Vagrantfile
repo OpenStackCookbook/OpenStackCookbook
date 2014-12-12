@@ -3,9 +3,9 @@
 
 nodes = {
     'controller'  => [1, 200],
-    'network'  => [1, 202],
-    'compute'  => [1, 201],
-    'compute2'  => [1, 202],
+    'network'  => [1, 201],
+    'compute'  => [1, 202],
+    'compute2'  => [1, 203],
     # 'swift'   => [1, 210],
     'cinder'   => [1, 211],
 }

@@ -14,6 +14,7 @@
 
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
 echo "net.ipv4.ip_forward=1
@@ -29,21 +30,26 @@ sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent open
 
 sudo /etc/init.d/openvswitch-switch start
 
-# Edit the /etc/network/interfaces file for eth2?
-sudo ifconfig eth2 0.0.0.0 up
-sudo ip link set eth2 promisc on
 
 # OpenVSwitch Configuration
 #br-int will be used for VM integration
 sudo ovs-vsctl add-br br-int
 
+# Neutron Tenant Tunnel Network
 sudo ovs-vsctl add-br br-eth2
 sudo ovs-vsctl add-port br-eth2 eth2
 
+# In reality you would edit the /etc/network/interfaces file for eth3?
+sudo ifconfig eth2 0.0.0.0 up
+sudo ip link set eth2 promisc on
+# Assign IP to br-eth2 so it is accessible
+sudo ifconfig br-eth2 $ETH2_IP netmask 255.255.255.0
+
+# Neutron External Router Network
 sudo ovs-vsctl add-br br-ex
 sudo ovs-vsctl add-port br-ex eth3
 
-# Edit the /etc/network/interfaces file for eth3?
+# In reality you would edit the /etc/network/interfaces file for eth3
 sudo ifconfig eth3 0.0.0.0 up
 sudo ip link set eth3 promisc on
 # Assign IP to br-ex so it is accessible
@@ -82,7 +88,7 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
-##router_distributed = True
+router_distributed = True
 
 # auth
 auth_strategy = keystone
@@ -126,7 +132,7 @@ cat > ${NEUTRON_L3_AGENT_INI} << EOF
 [DEFAULT]
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 use_namespaces = True
-##agent_mode = dvr_snat
+agent_mode = dvr_snat
 EOF
 
 cat > ${NEUTRON_DHCP_AGENT_INI} << EOF
@@ -156,19 +162,36 @@ EOF
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
 type_drivers = gre,vxlan
-tenant_network_types = gre
+tenant_network_types = vxlan
 mechanism_drivers = openvswitch,l2population
 
 [ml2_type_gre]
 tunnel_id_ranges = 1:1000
 
+[ml2_type_vxlan]
+vxlan_group =
+vni_ranges = 1:1000
+
+[vxlan]
+enable_vxlan = True
+vxlan_group =
+local_ip = ${ETH2_IP}}
+l2_population = True
+
+[agent]
+tunnel_types = vxlan
+## VXLAN udp port
+# This is set for the vxlan port and while this
+# is being set here it's ignored because 
+# the port is assigned by the kernel
+vxlan_udp_port = 4789
+
 [ovs]
-local_ip = ${MY_IP}
+local_ip = ${ETH2_IP}
 tunnel_type = vxlan
 enable_tunneling = True
 l2_population = True
-##enable_distributed_routing = True
-
+enable_distributed_routing = True
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
@@ -184,7 +207,7 @@ neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 # Restart Neutron Services
 sudo service neutron-plugin-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
-sudo service neutron-l3-agent restart
+sudo service neutron-l3-agent stop # DVR
 sudo service neutron-metadata-agent restart
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys

@@ -390,7 +390,7 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
-##router_distributed = True
+router_distributed = True
 
 # auth
 auth_strategy = keystone
@@ -459,12 +459,31 @@ EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
-type_drivers = gre
-tenant_network_types = gre
-mechanism_drivers = openvswitch
+type_drivers = vxlan,gre
+tenant_network_types = vxlan
+mechanism_drivers = openvswitch,l2population
 
 [ml2_type_gre]
 tunnel_id_ranges = 1:1000
+
+[ml2_type_vxlan]
+vxlan_group =
+vni_ranges = 1:1000
+
+[vxlan]
+enable_vxlan = True
+vxlan_group =
+l2_population = True
+
+
+[agent]
+tunnel_types = vxlan
+## VXLAN udp port
+# This is set for the vxlan port and while this
+# is being set here it's ignored because 
+# the port is assigned by the kernel
+vxlan_udp_port = 4789
+
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver

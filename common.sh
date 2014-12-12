@@ -39,8 +39,9 @@ then
 	echo "
 # CookbookHosts
 172.16.0.200	controller.book controller
-172.16.0.201	compute.book compute
-172.16.0.202	network.book network
+172.16.0.201	network.book network
+172.16.0.202	compute.book compute
+172.16.0.203	compute2.book compute2
 172.16.0.210	swift.book swift
 172.16.0.211	cinder.book cinder" | sudo tee -a /etc/hosts
 fi

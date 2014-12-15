@@ -86,6 +86,17 @@ sudo ip link set eth2 promisc on
 # Assign IP to br-eth2 so it is accessible
 sudo ifconfig br-eth2 $ETH2_IP netmask 255.255.255.0
 
+# Neutron External Router Network
+sudo ovs-vsctl add-br br-ex
+sudo ovs-vsctl add-port br-ex eth3
+
+# In reality you would edit the /etc/network/interfaces file for eth3
+sudo ifconfig eth3 0.0.0.0 up
+sudo ip link set eth3 promisc on
+# Assign IP to br-ex so it is accessible
+sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
+
+
 # Config Files
 NEUTRON_CONF=/etc/neutron/neutron.conf
 NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
@@ -113,6 +124,7 @@ core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
 router_distributed = True
+dvr_base_mac = fa:16:3f:01:00:00
 
 # auth
 auth_strategy = keystone
@@ -157,6 +169,8 @@ cat > ${NEUTRON_L3_AGENT_INI} << EOF
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 use_namespaces = True
 agent_mode = dvr
+external_network_bridge = br-ex
+verbose = True
 EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
@@ -169,27 +183,29 @@ mechanism_drivers = openvswitch,l2population
 tunnel_id_ranges = 1:1000
 
 [ml2_type_vxlan]
-vxlan_group =
 vni_ranges = 1:1000
 
-[vxlan]
-enable_vxlan = True
-vxlan_group =
-local_ip = ${ETH2_IP}
-l2_population = True
+#[vxlan]
+#enable_vxlan = True
+#vxlan_group =
+#local_ip = ${ETH2_IP}
+#l2_population = True
 
 [agent]
 tunnel_types = vxlan
-## VXLAN udp port
-# This is set for the vxlan port and while this
-# is being set here it's ignored because 
-# the port is assigned by the kernel
-vxlan_udp_port = 4789
+l2_population = True
+enable_distributed_routing = True
+arp_responder = True
 
 [ovs]
 local_ip = ${ETH2_IP}
 tunnel_type = vxlan
 enable_tunneling = True
+l2_population = True
+enable_distributed_routing = True
+tunnel_bridge = br-tun
+
+
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver

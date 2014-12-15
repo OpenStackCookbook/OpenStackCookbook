@@ -74,7 +74,7 @@ NEUTRON_SERVICE_PASS=neutron
 cat > ${NEUTRON_CONF} << EOF
 [DEFAULT]
 verbose = True
-debug = True
+debug = False
 state_path = /var/lib/neutron
 lock_path = \$state_path/lock
 log_dir = /var/log/neutron
@@ -133,6 +133,8 @@ cat > ${NEUTRON_L3_AGENT_INI} << EOF
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 use_namespaces = True
 agent_mode = dvr_snat
+external_network_bridge = br-ex
+verbose = True
 EOF
 
 cat > ${NEUTRON_DHCP_AGENT_INI} << EOF
@@ -161,7 +163,7 @@ EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
-type_drivers = gre,vxlan
+type_drivers = gre,vxlan,vlan,flat
 tenant_network_types = vxlan
 mechanism_drivers = openvswitch,l2population
 
@@ -169,22 +171,20 @@ mechanism_drivers = openvswitch,l2population
 tunnel_id_ranges = 1:1000
 
 [ml2_type_vxlan]
-vxlan_group =
+#vxlan_group =
 vni_ranges = 1:1000
 
-[vxlan]
-enable_vxlan = True
-vxlan_group =
-local_ip = ${ETH2_IP}}
-l2_population = True
+#[vxlan]
+#enable_vxlan = True
+#vxlan_group =
+#local_ip = ${ETH2_IP}
+#l2_population = True
 
 [agent]
 tunnel_types = vxlan
-## VXLAN udp port
-# This is set for the vxlan port and while this
-# is being set here it's ignored because 
-# the port is assigned by the kernel
-vxlan_udp_port = 4789
+l2_population = True
+enable_distributed_routing = True
+arp_responder = True
 
 [ovs]
 local_ip = ${ETH2_IP}
@@ -192,6 +192,7 @@ tunnel_type = vxlan
 enable_tunneling = True
 l2_population = True
 enable_distributed_routing = True
+tunnel_bridge = br-tun
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver

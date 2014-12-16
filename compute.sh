@@ -4,13 +4,11 @@
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+#          Egle Sigler (ushnishtha@hotmail.com)
 
-# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition
 # Website: http://www.openstackcookbook.com/
-# Updated for Icehouse
-
-# There are lots of bits adapted from:
-# https://github.com/mseknibilel/OpenStack-Grizzly-Install-Guide/blob/OVS_MultiNode/OpenStack_Grizzly_Install_Guide.rst
+# Updated for Juno
 
 # Source in common env vars
 . /vagrant/common.sh
@@ -272,7 +270,7 @@ neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${CONTROLLER_HOST}:5000/v2.0
+neutron_admin_auth_url=https://${CONTROLLER_HOST}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 #firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -303,7 +301,7 @@ scheduler_default_filters=AllHostsFilter
 
 # Auth
 auth_strategy=keystone
-keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
+keystone_ec2_url=https://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
@@ -325,7 +323,7 @@ service_port = 5000
 auth_host = ${CONTROLLER_HOST}
 auth_port = 35357
 auth_protocol = http
-auth_uri = http://${CONTROLLER_HOST}:5000/
+auth_uri = https://${CONTROLLER_HOST}:5000/
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}

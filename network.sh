@@ -4,10 +4,11 @@
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+#          Egle Sigler (ushnishtha@hotmail.com)
 
-# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition
 # Website: http://www.openstackcookbook.com/
-# Suitable for OpenStack Grizzly
+# Suitable for OpenStack Juno
 
 # Source in common env vars
 . /vagrant/common.sh
@@ -152,7 +153,7 @@ EOF
 
 cat > ${NEUTRON_METADATA_AGENT_INI} << EOF
 [DEFAULT]
-auth_url = http://${CONTROLLER_HOST}:5000/v2.0
+auth_url = https://${CONTROLLER_HOST}:5000/v2.0
 auth_region = regionOne
 admin_tenant_name = service
 admin_user = ${NEUTRON_SERVICE_USER}

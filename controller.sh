@@ -581,6 +581,7 @@ nova_admin_username = ${NOVA_SERVICE_USER}
 nova_admin_tenant_id = ${SERVICE_TENANT_ID}
 nova_admin_password = ${NOVA_SERVICE_PASS}
 nova_admin_auth_url = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+nova_api_insecure = True
 
 [quotas]
 # quota_driver = neutron.db.quota_db.DbQuotaDriver

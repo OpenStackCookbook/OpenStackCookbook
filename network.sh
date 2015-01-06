@@ -4,13 +4,19 @@
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+#          Egle Sigler (ushnishtha@hotmail.com)
 
-# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition
 # Website: http://www.openstackcookbook.com/
-# Suitable for OpenStack Grizzly
+# Suitable for OpenStack Juno
 
 # Source in common env vars
 . /vagrant/common.sh
+# Keys
+# Nova-Manage Hates Me
+ssh-keyscan controller >> ~/.ssh/known_hosts
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+cp /vagrant/id_rsa* ~/.ssh/
 
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
@@ -25,6 +31,8 @@ sysctl -p
 sudo apt-get update
 sudo apt-get -y upgrade
 sudo apt-get -y install linux-headers-`uname -r`
+sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+sudo c_rehash /etc/ssl/certs/ca.pem
 sudo apt-get -y install vlan bridge-utils dnsmasq-base dnsmasq-utils
 sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent ipset python-mysqldb
 
@@ -111,13 +119,14 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${CONTROLLER_HOST}
+auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
 auth_port = 35357
-auth_protocol = http
+auth_protocol = https
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
 signing_dir = \$state_path/keystone-signing
+insecure = True
 
 [database]
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
@@ -152,13 +161,14 @@ EOF
 
 cat > ${NEUTRON_METADATA_AGENT_INI} << EOF
 [DEFAULT]
-auth_url = http://${CONTROLLER_HOST}:5000/v2.0
+auth_url = https://${KEYSTONE_ENDPOINT}:5000/v2.0
 auth_region = regionOne
 admin_tenant_name = service
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
 nova_metadata_ip = ${CONTROLLER_HOST}
 metadata_proxy_shared_secret = foo
+insecure = True
 EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF

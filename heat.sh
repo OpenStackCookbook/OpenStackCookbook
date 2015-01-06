@@ -821,7 +821,7 @@ service_port = 5000
 auth_host = ${CONTROLLER_HOST}
 auth_port = 35357
 auth_protocol = http
-auth_uri = http://${CONTROLLER_HOST}:35357/
+auth_uri = https://${CONTROLLER_HOST}:35357/
 admin_tenant_name = service
 admin_user = heat
 admin_password = heat
@@ -918,25 +918,25 @@ EOF
 
 heat-manage db_sync
 
-keystone user-create --name=heat --pass=heat --email=heat@localhost
-keystone user-role-add --user=heat --tenant=service --role=admin
+keystone --insecure user-create --name=heat --pass=heat --email=heat@localhost
+keystone --insecure user-role-add --user=heat --tenant=service --role=admin
 
-keystone service-create --name=heat --type=orchestration --description="Heat Orchestration API"
+keystone --insecure service-create --name=heat --type=orchestration --description="Heat Orchestration API"
 
 ORCHESTRATION_SERVICE_ID=$(keystone service-list | awk '/\ orchestration\ / {print $2}')
 
-keystone endpoint-create \
+keystone --insecure endpoint-create \
   --region regionOne \
   --service-id=${ORCHESTRATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
   --internalurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s \
   --adminurl=http://${CONTROLLER_HOST}:8004/v1/$\(tenant_id\)s
 
-keystone service-create --name=heat-cfn --type=cloudformation --description="Heat CloudFormation API"
+keystone --insecure service-create --name=heat-cfn --type=cloudformation --description="Heat CloudFormation API"
 
 CLOUDFORMATION_SERVICE_ID=$(keystone service-list | awk '/\ cloudformation\ / {print $2}')
 
-keystone endpoint-create \
+keystone --insecure endpoint-create \
   --region regionOne \
   --service-id=${CLOUDFORMATION_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8000/v1/ \

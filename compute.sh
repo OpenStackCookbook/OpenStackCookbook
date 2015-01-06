@@ -225,7 +225,7 @@ Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
 # Metadata
-echo "
+cat > ${NEUTRON_METADATA_AGENT_INI} << EOF
 [DEFAULT]
 auth_url = https://${KEYSTONE_ENDPOINT}:5000/v2.0
 auth_region = regionOne
@@ -233,12 +233,14 @@ admin_tenant_name = service
 admin_user = neutron
 admin_password = neutron
 nova_metadata_ip = ${CONTROLLER_HOST}
-insecure = True
-metadata_proxy_shared_secret = foo" | sudo tee -a ${NEUTRON_METADATA_AGENT_INI}
+auth_insecure = True
+metadata_proxy_shared_secret = foo
+EOF
 
 
 # Restart Neutron Services
 service neutron-plugin-openvswitch-agent restart
+restart neutron-metadata-agent
 
 # Qemu or KVM (VT-x/AMD-v)
 KVM=$(egrep '(vmx|svm)' /proc/cpuinfo)

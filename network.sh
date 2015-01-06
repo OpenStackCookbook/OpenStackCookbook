@@ -168,7 +168,7 @@ admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
 nova_metadata_ip = ${CONTROLLER_HOST}
 metadata_proxy_shared_secret = foo
-insecure = True
+auth_insecure = True
 EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF

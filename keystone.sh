@@ -42,6 +42,9 @@ sudo apt-get -y install python-keystoneclient
 export ENDPOINT=127.0.0.1
 export OS_SERVICE_TOKEN=ADMIN
 export OS_SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export OS_CACERT=/vagrant/ca.pem
+export OS_KEY=/vagrant/cakey.pem
+
 
 # admin role
 keystone role-create --name admin

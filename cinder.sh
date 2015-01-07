@@ -5,7 +5,7 @@
 # Authors: Cody Bunch (bunchc@gmail.com)
 #          Kevin Jackson (kevin@linuxservices.co.uk)
 
-# Updated for Icehouse
+# Updated for Juno
 
 # Source in common env vars
 . /vagrant/common.sh
@@ -13,6 +13,14 @@
 # Install some deps
 sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
 
+# Keys
+# Nova-Manage Hates Me
+ssh-keyscan controller >> ~/.ssh/known_hosts
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+cp /vagrant/id_rsa* ~/.ssh/
+
+sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+sudo c_rehash /etc/ssl/certs/ca.pem
 # Install Cinder Things
 sudo apt-get install -y cinder-api cinder-scheduler cinder-volume open-iscsi python-cinderclient tgt
 
@@ -53,16 +61,14 @@ backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
-service_protocol = http
-service_host = ${CONTROLLER_HOST}
-service_port = 5000
-auth_host = ${CONTROLLER_HOST}
+auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
 auth_port = 35357
-auth_protocol = http
-auth_uri = http://${CONTROLLER_HOST}:5000/
+auth_protocol = https
+auth_uri = https://${KEYSTONE_ENDPOINT}:5000/
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
+insecure = True
 
 EOF
 

@@ -5,9 +5,9 @@
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
 
-# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition, 2014
 # Website: http://www.openstackcookbook.com/
-# Scripts updated for Icehouse!
+# Scripts updated for Juno!
 
 #
 # Sets up common bits used in each build script.
@@ -20,14 +20,17 @@ export DEBIAN_FRONTEND=noninteractive
 export CONTROLLER_HOST=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')
 export GLANCE_HOST=${CONTROLLER_HOST}
 export MYSQL_HOST=${CONTROLLER_HOST}
-export KEYSTONE_ENDPOINT=${CONTROLLER_HOST}
+export KEYSTONE_ADMIN_ENDPOINT=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')
+export KEYSTONE_ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
 export MYSQL_NEUTRON_PASS=openstack
 export SERVICE_TENANT_NAME=service
 export SERVICE_PASS=openstack
-export ENDPOINT=${KEYSTONE_ENDPOINT}
+export ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
 export MONGO_KEY=MongoFoo
+export OS_CACERT=/vagrant/ca.pem
+export OS_KEY=/vagrant/cakey.pem
 
 sudo apt-get install -y software-properties-common ubuntu-cloud-keyring
 sudo add-apt-repository -y cloud-archive:juno
@@ -38,10 +41,17 @@ then
 	# Add host entries
 	echo "
 # CookbookHosts
-172.16.0.199	openldap.cook.book openldap.book openldap
-172.16.0.200	controller.cook.book controller.book controller
-172.16.0.201	compute.cook.book compute.book compute
-172.16.0.202	network.cook.book network.book network
-172.16.0.210	swift.cook.book swift.book swift
-172.16.0.211	cinder.cook.book cinder.book cinder" | sudo tee -a /etc/hosts
+192.168.100.200	controller.book controller
+192.168.100.201	network.book network
+192.168.100.202	compute.book compute
+192.168.100.203	compute2.book compute2
+192.168.100.210	swift.book swift
+192.168.100.211	cinder.book cinder" | sudo tee -a /etc/hosts
 fi
+
+# Aliases for insecure SSL
+# alias nova='nova --insecure'
+# alias keystone='keystone --insecure'
+# alias neutron='neutron --insecure'
+# alias glance='glance --insecure'
+# alias cinder='cinder --insecure'

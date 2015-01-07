@@ -4,9 +4,10 @@
 nodes = {
 #    'openldap'  => [1, 199],
     'controller'  => [1, 200],
-    'network'  => [1, 202],
-    'compute'  => [1, 201],
-    # 'swift'   => [1, 210],
+    'network'  => [1, 201],
+    'compute'  => [1, 202],
+    'compute2'  => [1, 203],
+    'swift'   => [1, 210],
     'cinder'   => [1, 211],
 }
 
@@ -17,7 +18,7 @@ Vagrant.configure("2") do |config|
     config.vm.synced_folder ".", "/vagrant", type: "nfs"
 
     # VMware Fusion / Workstation
-    config.vm.provider "vmware_fusion" do |vmware, override|
+    config.vm.provider "vmware_fusion" or config.vm.provider "vmware_workstation" do |vmware, override|
       override.vm.box = "bunchc/trusty-x64"
       override.vm.synced_folder ".", "/vagrant", type: "nfs"
 
@@ -34,6 +35,7 @@ Vagrant.configure("2") do |config|
       vmware.vmx["unity.showBadges"] = "FALSE"
       vmware.vmx["unity.showBorders"] = "FALSE"
       vmware.vmx["unity.wasCapable"] = "FALSE"
+      vmware.vmx["vhv.enable"] = "TRUE"
     end
 
 
@@ -59,8 +61,8 @@ Vagrant.configure("2") do |config|
             config.vm.define "#{hostname}" do |box|
                 box.vm.hostname = "#{hostname}.cook.book"
                 box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
-                box.vm.network :private_network, ip: "172.10.0.#{ip_start+i}", :netmask => "255.255.0.0" 
-            		box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
+                box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.255.0" 
+            	box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
 
                 box.vm.provision :shell, :path => "#{prefix}.sh"
 
@@ -68,7 +70,17 @@ Vagrant.configure("2") do |config|
                 box.vm.provider :vmware_fusion do |v|
                   v.vmx["memsize"] = 1024
                   if prefix == "compute" or prefix == "controller" or prefix == "swift"
-	              	  v.vmx["memsize"] = 2048
+	            v.vmx["memsize"] = 3172
+                    v.vmx["numvcpus"] = "2"
+                  end
+                end
+
+                # If using Workstation
+                box.vm.provider :vmware_workstation do |v|
+                  v.vmx["memsize"] = 1024
+                  if prefix == "compute" or prefix == "controller" or prefix == "swift"
+                    v.vmx["memsize"] = 3172
+                    v.vmx["numvcpus"] = "2"
                   end
                 end
 
@@ -77,12 +89,12 @@ Vagrant.configure("2") do |config|
                   # Defaults
                   vbox.customize ["modifyvm", :id, "--memory", 1024]
                   vbox.customize ["modifyvm", :id, "--cpus", 1]
-	                if prefix == "compute" or prefix == "controller" or prefix == "swift"
-                  	vbox.customize ["modifyvm", :id, "--memory", 2048]
+	          if prefix == "compute" or prefix == "controller" or prefix == "swift"
+                    vbox.customize ["modifyvm", :id, "--memory", 3172]
                     vbox.customize ["modifyvm", :id, "--cpus", 2]
-              			vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
-              			vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
                   end
+                  vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+                  vbox.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
                 end
             end
         end

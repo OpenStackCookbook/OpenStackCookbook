@@ -3,8 +3,17 @@
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
 export OS_PASSWORD=openstack
-export OS_AUTH_URL=http://172.16.0.200:5000/v2.0/
+export OS_AUTH_URL=https://192.168.100.200:5000/v2.0/
 export OS_NO_CACHE=1
+export OS_KEY=/vagrant/cakey.pem
+export OS_CACERT=/vagrant/ca.pem
+
+# Aliases for insecure SSL
+alias nova='nova --insecure'
+alias keystone='keystone --insecure'
+alias neutron='neutron --insecure'
+alias glance='glance --insecure'
+alias cinder='cinder --insecure'
 
 TENANT_ID=$(keystone tenant-list \
    | awk '/\ cookbook\ / {print $2}')
@@ -18,7 +27,7 @@ neutron subnet-create \
     --tenant-id ${TENANT_ID} \
     --name cookbook_subnet_1 \
     cookbook_network_1 \
-    10.200.0.0/24
+    11.200.0.0/24
 
 neutron router-create \
     --tenant-id ${TENANT_ID} \
@@ -70,7 +79,7 @@ neutron router-gateway-set \
     ${EXT_NET_ID}
 
 neutron floatingip-create --tenant-id ${TENANT_ID} ext_net
-VM_PORT=$(neutron port-list | awk '/10.200.0.2/ {print $2}')
+VM_PORT=$(neutron port-list | awk '/11.200.0.2/ {print $2}')
 FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
 neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
 

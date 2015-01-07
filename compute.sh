@@ -4,19 +4,18 @@
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+#          Egle Sigler (ushnishtha@hotmail.com)
 
-# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 2nd Edition, October 2013
+# Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition
 # Website: http://www.openstackcookbook.com/
-# Updated for Icehouse
-
-# There are lots of bits adapted from:
-# https://github.com/mseknibilel/OpenStack-Grizzly-Install-Guide/blob/OVS_MultiNode/OpenStack_Grizzly_Install_Guide.rst
+# Updated for Juno
 
 # Source in common env vars
 . /vagrant/common.sh
 
 # The routeable IP of the node is on our eth1 interface
-MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
 # Must define your environment
@@ -27,11 +26,20 @@ SERVICE_TENANT=service
 NOVA_SERVICE_USER=nova
 NOVA_SERVICE_PASS=nova
 
+# Keys
+# Nova-Manage Hates Me
+ssh-keyscan controller >> ~/.ssh/known_hosts
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+cp /vagrant/id_rsa* ~/.ssh/
+
+sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+sudo c_rehash /etc/ssl/certs/ca.pem
 nova_compute_install() {
 
 	# Install some packages:
 	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth
-	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
+	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent
+	#sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	sudo apt-get -y install vlan bridge-utils
 	sudo apt-get -y install libvirt-bin pm-utils sysfsutils
 	sudo service ntp restart
@@ -70,22 +78,30 @@ sudo service libvirt-bin restart
 sudo apt-get install -y linux-headers-`uname -r` build-essential
 sudo apt-get install -y openvswitch-switch 
 
-# Edit the /etc/network/interfaces file for eth2?
-sudo ifconfig eth2 0.0.0.0 up
-sudo ip link set eth2 promisc on
-
 # OpenVSwitch Configuration
 #br-int will be used for VM integration
 sudo ovs-vsctl add-br br-int
 
+# Neutron Tenant Tunnel Network
+sudo ovs-vsctl add-br br-eth2
+sudo ovs-vsctl add-port br-eth2 eth2
+
+# In reality you would edit the /etc/network/interfaces file for eth3?
+sudo ifconfig eth2 0.0.0.0 up
+sudo ip link set eth2 promisc on
+# Assign IP to br-eth2 so it is accessible
+sudo ifconfig br-eth2 $ETH2_IP netmask 255.255.255.0
+
+# Neutron External Router Network
 sudo ovs-vsctl add-br br-ex
 sudo ovs-vsctl add-port br-ex eth3
 
-# Edit the /etc/network/interfaces file for eth3?
+# In reality you would edit the /etc/network/interfaces file for eth3
 sudo ifconfig eth3 0.0.0.0 up
 sudo ip link set eth3 promisc on
 # Assign IP to br-ex so it is accessible
 sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
+
 
 # Config Files
 NEUTRON_CONF=/etc/neutron/neutron.conf
@@ -113,9 +129,12 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
+router_distributed = True
+dvr_base_mac = fa:16:3f:01:00:00
 
 # auth
 auth_strategy = keystone
+nova_api_insecure = True
 
 # RPC configuration options. Defined in rpc __init__
 # The messaging module to use, defaults to kombu.
@@ -135,13 +154,14 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${CONTROLLER_HOST}
+auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
 auth_port = 35357
-auth_protocol = http
+auth_protocol = https
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
 signing_dir = \$state_path/keystone-signing
+insecure = True
 
 [database]
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
@@ -152,19 +172,48 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 EOF
 
+cat > ${NEUTRON_L3_AGENT_INI} << EOF
+[DEFAULT]
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+use_namespaces = True
+agent_mode = dvr
+external_network_bridge = br-ex
+verbose = True
+EOF
+
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
-type_drivers = gre
-tenant_network_types = gre
-mechanism_drivers = openvswitch
+type_drivers = gre,vxlan
+tenant_network_types = vxlan
+mechanism_drivers = openvswitch,l2population
 
 [ml2_type_gre]
 tunnel_id_ranges = 1:1000
 
+[ml2_type_vxlan]
+vni_ranges = 1:1000
+
+#[vxlan]
+#enable_vxlan = True
+#vxlan_group =
+#local_ip = ${ETH2_IP}
+#l2_population = True
+
+[agent]
+tunnel_types = vxlan
+l2_population = True
+enable_distributed_routing = True
+arp_responder = True
+
 [ovs]
-local_ip = ${MY_IP}
-tunnel_type = gre
+local_ip = ${ETH2_IP}
+tunnel_type = vxlan
 enable_tunneling = True
+l2_population = True
+enable_distributed_routing = True
+tunnel_bridge = br-tun
+
+
 
 [securitygroup]
 firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
@@ -175,13 +224,38 @@ echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 
+# Metadata
+cat > ${NEUTRON_METADATA_AGENT_INI} << EOF
+[DEFAULT]
+auth_url = https://${KEYSTONE_ENDPOINT}:5000/v2.0
+auth_region = regionOne
+admin_tenant_name = service
+admin_user = neutron
+admin_password = neutron
+nova_metadata_ip = ${CONTROLLER_HOST}
+auth_insecure = True
+metadata_proxy_shared_secret = foo
+EOF
+
+
 # Restart Neutron Services
 service neutron-plugin-openvswitch-agent restart
+restart neutron-metadata-agent
+
+# Qemu or KVM (VT-x/AMD-v)
+KVM=$(egrep '(vmx|svm)' /proc/cpuinfo)
+if [[ ${KVM} ]]
+then
+	LIBVIRT=kvm
+else
+	LIBVIRT=qemu
+fi
 
 
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
 NOVA_API_PASTE=/etc/nova/api-paste.ini
+#copy cert from controller to trust it
 
 cat > ${NOVA_CONF} <<EOF
 [DEFAULT]
@@ -202,7 +276,7 @@ enabled_apis=ec2,osapi_compute,metadata
 # Libvirt and Virtualization
 libvirt_use_virtio_for_bridges=True
 connection_type=libvirt
-libvirt_type=qemu
+libvirt_type=${LIBVIRT}
 
 # Database
 sql_connection=mysql://nova:openstack@${MYSQL_HOST}/nova
@@ -222,12 +296,13 @@ neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=http://${CONTROLLER_HOST}:5000/v2.0
+neutron_admin_auth_url=https://${KEYSTONE_ENDPOINT}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 #firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
 security_group_api=neutron
 firewall_driver=nova.virt.firewall.NoopFirewallDriver
+neutron_ca_certificates_file=/etc/ssl/certs/ca.pem
 
 service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
@@ -253,32 +328,27 @@ scheduler_default_filters=AllHostsFilter
 
 # Auth
 auth_strategy=keystone
-keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
+keystone_ec2_url=https://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_host=${MY_IP}
-novncproxy_base_url=http://${MY_IP}:6080/vnc_auto.html
+novncproxy_host=${ETH3_IP}
+novncproxy_base_url=http://${ETH3_IP}:6080/vnc_auto.html
 novncproxy_port=6080
 
 xvpvncproxy_port=6081
-xvpvncproxy_host=${MY_IP}
-xvpvncproxy_base_url=http://${MY_IP}:6081/console
+xvpvncproxy_host=${ETH3_IP}
+xvpvncproxy_base_url=http://${ETH3_IP}:6081/console
 
-vncserver_proxyclient_address=${MY_IP}
+vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
-service_protocol = http
-service_host = ${CONTROLLER_HOST}
-service_port = 5000
-auth_host = ${CONTROLLER_HOST}
-auth_port = 35357
-auth_protocol = http
-auth_uri = http://${CONTROLLER_HOST}:5000/
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/
+insecure = True
 
 
 EOF
@@ -308,17 +378,11 @@ nova_configure
 nova_ceilometer
 nova_restart
 
-# Keys
-# Nova-Manage Hates Me
-ssh-keyscan controller >> ~/.ssh/known_hosts
-cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
-
-cp /vagrant/id_rsa* ~/.ssh/
-
 sleep 90; echo "[+] Restarting nova-* on controller"
 ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f1 | while read N; do stop \$N; start \$N; done"
 sleep 30; echo "[+] Restarting nova-* on compute"
 nova_restart
+start neutron-l3-agent
 
 # Logging
 sudo stop rsyslog

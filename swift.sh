@@ -1,16 +1,26 @@
 # swift.sh
 
-source /vagrant/common.sh
+# Source in common env vars
+. /vagrant/common.sh
 
-sudo apt-get -y install python-software-properties
-sudo add-apt-repository -y ppa:ubuntu-cloud-archive/havana-staging
+# Install some deps
+sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
+
+# Keys
+# Nova-Manage Hates Me
+ssh-keyscan controller >> ~/.ssh/known_hosts
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
+cp /vagrant/id_rsa* ~/.ssh/
+
+sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+sudo c_rehash /etc/ssl/certs/ca.pem
 
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
 swift_install() {
 	# Install some packages:
-	sudo apt-get -y install swift swift-proxy swift-account swift-container swift-object memcached xfsprogs curl python-webob
+	sudo apt-get -y install swift swift-proxy swift-account swift-container swift-object memcached xfsprogs curl python-webob python-keystoneclient python-swiftclient
 	sudo service ntp restart
 
 	# Create signing directory & Set owner to swift
@@ -181,11 +191,11 @@ set log_name = cache
 
 [filter:authtoken]
 paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
-auth_protocol = http
+auth_protocol = https
 auth_host = $KEYSTONE_ENDPOINT
 auth_port = 35357
 auth_token = admin
-service_protocol = http
+service_protocol = https
 service_host = $KEYSTONE_ENDPOINT
 service_port = 5000
 admin_token = admin
@@ -306,15 +316,18 @@ sudo cp /vagrant/remakerings.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/remakerings.sh
 sudo /usr/local/bin/remakerings.sh
 
-export ENDPOINT=172.16.0.200
+export ENDPOINT=192.168.100.200
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export OS_KEY=/vagrant/cakey.pem
+export OS_CACERT=/vagrant/ca.pem
+
 
 # Swift Proxy Address
 export SWIFT_PROXY_SERVER=$MY_IP
 
 # Configure the OpenStack Storage Endpoint
-keystone --token $SERVICE_TOKEN --endpoint $SERVICE_ENDPOINT service-create --name swift --type object-store --description 'OpenStack Storage Service'
+keystone service-create --name swift --type object-store --description 'OpenStack Storage Service'
 
 # Service Endpoint URLs
 ID=$(keystone service-list | awk '/\ swift\ / {print $2}')
@@ -341,20 +354,23 @@ ROLE_ID=$(keystone role-list | awk '/\ admin\ / {print $2}')
 keystone user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $SERVICE_TENANT_ID
 
 # Create .swiftrc
-sudo tee /root/.swiftrc >/dev/null <<EOF
+sudo tee /root/swiftrc >/dev/null <<EOF
 export OS_USERNAME=swift
 export OS_PASSWORD=swift
 export OS_TENANT_NAME=service
-export OS_AUTH_URL=http://${ENDPOINT}:5000/v2.0/
+export OS_AUTH_URL=https://${ENDPOINT}:5000/v2.0/
+export OS_KEY=/vagrant/cakey.pem
+export OS_CACERT=/vagrant/ca.pem
+
 EOF
 
 # Create dispersion.conf
-sudo tee /etc/swift/dispersion.conf >/dev/null <<EOF
-[dispersion]
-auth_url = http://${ENDPOINT}:5000/v2.0/
-auth_user = cookbook:admin
-auth_key = openstack
-EOF
+#sudo tee /etc/swift/dispersion.conf >/dev/null <<EOF
+#[dispersion]
+#auth_url = https://${ENDPOINT}:5000/v2.0/
+#auth_user = cookbook:admin
+#auth_key = openstack
+#EOF
 
 sudo chown -L -R swift.swift /etc/swift /srv/{1..4} /run/swift
 

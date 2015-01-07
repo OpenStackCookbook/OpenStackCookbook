@@ -196,7 +196,6 @@ create_endpoints(){
   INTERNAL="http://$INT_ENDPOINT:9696"
 
   keystone  endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
-
 }
 
 # If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
@@ -576,7 +575,7 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 notify_nova_on_port_status_changes = True
 notify_nova_on_port_data_changes = True
 nova_url = http://${CONTROLLER_HOST}:8774/v2
-nova_region_name = regionOne
+nova_region_name = RegionOne
 nova_admin_username = ${NOVA_SERVICE_USER}
 nova_admin_tenant_id = ${SERVICE_TENANT_ID}
 nova_admin_password = ${NOVA_SERVICE_PASS}

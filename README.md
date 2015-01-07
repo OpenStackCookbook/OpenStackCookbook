@@ -44,11 +44,7 @@ vagrant up
 ```bash
 vagrant ssh controller
 . /vagrant/openrc
-<<<<<<< HEAD
-nova service list
-=======
 nova service-list
->>>>>>> master
 nova list
 nova image-list
 neutron agent-list

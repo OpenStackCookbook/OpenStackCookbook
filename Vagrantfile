@@ -2,6 +2,7 @@
 # vi: set ft=ruby :
 
 nodes = {
+#    'openldap'  => [1, 199],
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [1, 202],
@@ -58,7 +59,7 @@ Vagrant.configure("2") do |config|
             hostname = "%s" % [prefix, (i+1)]
 
             config.vm.define "#{hostname}" do |box|
-                box.vm.hostname = "#{hostname}.book"
+                box.vm.hostname = "#{hostname}.cook.book"
                 box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
                 box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.255.0" 
             	box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 

@@ -204,6 +204,7 @@ admin_user = swift
 admin_password = swift
 delay_auth_decision = 0
 signing_dir = /var/swift-signing
+insecure = True
 
 [filter:keystone]
 use = egg:swift#keystoneauth

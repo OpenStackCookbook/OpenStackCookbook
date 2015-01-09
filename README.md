@@ -25,6 +25,9 @@ The book covers:
 * Automate your installations using Vagrant, Chef, and Puppet
 * Create custom Windows and Linux images for use in your private cloud environment.
 
+## Environment included with the OpenStack Cookbook Vagrant
+![alt tag](https://cloud.githubusercontent.com/assets/633739/5682650/76f890b8-9819-11e4-800f-a8b426b280ad.png)
+
 ## Usage
 ### Requirements
 * Vagrant 1.6+ http://www.vagrantup.com/

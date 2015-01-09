@@ -4,6 +4,7 @@
 
 # Authors: Kevin Jackson (kevin@linuxservices.co.uk)
 #          Cody Bunch (bunchc@gmail.com)
+#          Egle Sigler (ushnishtha@hotmail.com)
 
 # Vagrant scripts used by the OpenStack Cloud Computing Cookbook, 3rd Edition, 2014
 # Website: http://www.openstackcookbook.com/
@@ -46,6 +47,7 @@ then
 192.168.100.202	compute.book compute
 192.168.100.203	compute2.book compute2
 192.168.100.210	swift.book swift
+192.168.100.212	swift2.book swift2
 192.168.100.211	cinder.book cinder" | sudo tee -a /etc/hosts
 fi
 

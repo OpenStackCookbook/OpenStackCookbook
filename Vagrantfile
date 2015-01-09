@@ -6,8 +6,9 @@ nodes = {
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [1, 202],
-    'compute2'  => [1, 203],
+    #'compute2'  => [1, 203],
     'swift'   => [1, 210],
+    #'swift2'   => [1, 212],
     'cinder'   => [1, 211],
 }
 
@@ -63,6 +64,11 @@ Vagrant.configure("2") do |config|
                 box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
                 box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.255.0" 
             	box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
+
+		# If running second swift, swift2
+		if prefix == "swift2"
+		  box.vm.provision :shell, :path => "keystone.sh"
+		end
 
                 box.vm.provision :shell, :path => "#{prefix}.sh"
 

@@ -400,8 +400,7 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-#identity_uri = https://172.16.0.200:35357
-identity_uri = https://192.168.100.200:35357
+identity_uri = https://${ETH3_IP}:35357
 admin_tenant_name = service
 admin_user = glance
 admin_password = glance
@@ -410,15 +409,17 @@ insecure = True
 
 [glance_store]
 filesystem_store_datadir = /var/lib/glance/images/
+#stores = glance.store.swift.Store
 #swift_store_auth_version = 2
-#swift_store_auth_address = 172.16.0.200:5000/v2.0/
-#swift_store_user = jdoe:jdoe
-#swift_store_key = a86850deb2742ec3cb41518e26aa2d89
+#swift_store_auth_address = https://${ETH3_IP}:5000/v2.0/
+#swift_store_user = service:glance
+#swift_store_key = glance
 #swift_store_container = glance
-#swift_store_create_container_on_put = False
+#swift_store_create_container_on_put = True
 #swift_store_large_object_size = 5120
 #swift_store_large_object_chunk_size = 200
 #swift_enable_snet = False
+#swift_store_auth_insecure = True
 
 use_syslog = True
 syslog_log_facility = LOG_LOCAL0
@@ -426,7 +427,7 @@ syslog_log_facility = LOG_LOCAL0
 [paste_deploy]
 config_file = /etc/glance/glance-api-paste.ini
 flavor = keystone
-" | sudo tee -a ${GLANCE_API_CONF}
+" | sudo tee ${GLANCE_API_CONF}
 
 
 ## /etc/glance/glance-registry.conf
@@ -455,7 +456,7 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-identity_uri = https://192.168.100.200:35357
+identity_uri = https://${ETH3_IP}:35357
 admin_tenant_name = service
 admin_user = glance
 admin_password = glance
@@ -467,7 +468,7 @@ syslog_log_facility = LOG_LOCAL0
 [paste_deploy]
 config_file = /etc/glance/glance-registry-paste.ini
 flavor = keystone
-" | sudo tee -a ${GLANCE_REGISTRY_CONF}
+" | sudo tee ${GLANCE_REGISTRY_CONF}
 
 sudo stop glance-registry
 sudo start glance-registry

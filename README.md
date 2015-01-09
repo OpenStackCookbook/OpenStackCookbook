@@ -26,7 +26,7 @@ The book covers:
 * Create custom Windows and Linux images for use in your private cloud environment.
 
 ## Environment included with the OpenStack Cookbook Vagrant
-![alt tag](https://cloud.githubusercontent.com/assets/633739/5682650/76f890b8-9819-11e4-800f-a8b426b280ad.png)
+![Overview](https://cloud.githubusercontent.com/assets/633739/5682746/2d63d3f8-981a-11e4-990a-fd1b4f540534.png)
 
 ## Usage
 ### Requirements

@@ -165,7 +165,7 @@ log_level = DEBUG
 
 [pipeline:main]
 # Order of execution of modules defined below
-pipeline = catch_errors healthcheck cache authtoken keystone proxy-server
+pipeline = catch_errors healthcheck cache container_sync authtoken keystone proxy-server
 
 [app:proxy-server]
 use = egg:swift#proxy
@@ -189,13 +189,16 @@ use = egg:swift#catch_errors
 use = egg:swift#memcache
 set log_name = cache
 
+[filter:container_sync]
+use = egg:swift#container_sync
+
 [filter:authtoken]
 paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
-auth_protocol = https
+auth_protocol = http
 auth_host = $KEYSTONE_ENDPOINT
 auth_port = 35357
 auth_token = admin
-service_protocol = https
+service_protocol = http
 service_host = $KEYSTONE_ENDPOINT
 service_port = 5000
 admin_token = admin
@@ -211,6 +214,15 @@ use = egg:swift#keystoneauth
 operator_roles = admin, Member
 #reseller_prefix = AUTH_
 EOF
+
+# container-sync-realms.conf for container sync
+cat > /etc/swift/container-sync-realms.conf <<EOF
+[realm1]
+key = realm1key
+cluster_swift = http://swift:8080/v1/
+cluster_swift2 = http://swift2:8080/v1/
+EOF
+
 
 # Setup Account Server
 sudo cat > /etc/swift/account-server/1.conf <<EOF

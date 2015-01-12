@@ -6,17 +6,9 @@
 # Install some deps
 sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
 
-# Keys
-# Nova-Manage Hates Me
-ssh-keyscan controller >> ~/.ssh/known_hosts
-cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
-cp /vagrant/id_rsa* ~/.ssh/
-
-sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
-sudo c_rehash /etc/ssl/certs/ca.pem
-
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+KEYSTONE_ENDPOINT=${ETH3_IP}
 
 swift_install() {
 	# Install some packages:
@@ -194,11 +186,11 @@ use = egg:swift#container_sync
 
 [filter:authtoken]
 paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
-auth_protocol = http
+auth_protocol = https
 auth_host = $KEYSTONE_ENDPOINT
 auth_port = 35357
 auth_token = admin
-service_protocol = http
+service_protocol = https
 service_host = $KEYSTONE_ENDPOINT
 service_port = 5000
 admin_token = admin
@@ -329,12 +321,15 @@ sudo cp /vagrant/remakerings.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/remakerings.sh
 sudo /usr/local/bin/remakerings.sh
 
-export ENDPOINT=localhost
+export ENDPOINT=${ETH3_IP}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export OS_CACERT=/etc/ssl/certs/ca.pem
+export OS_KEY=/etc/ssl/certs/cakey.pem
+
 
 # Swift Proxy Address
-export SWIFT_PROXY_SERVER=$MY_IP
+export SWIFT_PROXY_SERVER=$ETH3_IP
 
 # Configure the OpenStack Storage Endpoint
 keystone service-create --name swift --type object-store --description 'OpenStack Storage Service'
@@ -369,8 +364,8 @@ export OS_USERNAME=swift
 export OS_PASSWORD=swift
 export OS_TENANT_NAME=service
 export OS_AUTH_URL=https://${ENDPOINT}:5000/v2.0/
-export OS_KEY=/vagrant/cakey.pem
-export OS_CACERT=/vagrant/ca.pem
+export OS_CACERT=/etc/ssl/certs/ca.pem
+export OS_KEY=/etc/ssl/certs/cakey.pem
 
 EOF
 

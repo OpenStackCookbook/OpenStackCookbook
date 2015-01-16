@@ -1,178 +1,342 @@
 # keystone.sh
-export DEBIAN_FRONTEND=noninteractive
 
+# Source in common env vars
+. /vagrant/common.sh
+
+# Overrides
+export CONTROLLER_HOST=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+export GLANCE_HOST=${CONTROLLER_HOST}
+export MYSQL_HOST=${CONTROLLER_HOST}
+export KEYSTONE_ADMIN_ENDPOINT=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+export KEYSTONE_ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
+export MYSQL_NEUTRON_PASS=openstack
+export SERVICE_TENANT_NAME=service
+export SERVICE_PASS=openstack
+export ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
+export SERVICE_TOKEN=ADMIN
+export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+export MONGO_KEY=MongoFoo
+export OS_CACERT=/vagrant/ca.pem
+export OS_KEY=/vagrant/cakey.pem
+
+
+# The routeable IP of the node is on our eth1 interface
+ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+
+PUBLIC_IP=${ETH3_IP}
+INT_IP=${ETH1_IP}
+ADMIN_IP=${ETH3_IP}
+
+#export LANG=C
+
+# MySQL
+export MYSQL_HOST=$ETH3_IP
 export MYSQL_ROOT_PASS=openstack
-export MYSQL_HOST=127.0.0.1
-export MYSQL_PASS=openstack
+export MYSQL_DB_PASS=openstack
 
 echo "mysql-server-5.5 mysql-server/root_password password $MYSQL_ROOT_PASS" | sudo debconf-set-selections
 echo "mysql-server-5.5 mysql-server/root_password_again password $MYSQL_ROOT_PASS" | sudo debconf-set-selections
 echo "mysql-server-5.5 mysql-server/root_password seen true" | sudo debconf-set-selections
 echo "mysql-server-5.5 mysql-server/root_password_again seen true" | sudo debconf-set-selections
-        
-sudo apt-get update
-sudo apt-get install python-software-properties -y
-sudo add-apt-repository ppa:openstack-ubuntu-testing/grizzly-trunk-testing
-sudo add-apt-repository ppa:openstack-ubuntu-testing/grizzly-build-depends
-sudo apt-get update && apt-get upgrade -y
 
 sudo apt-get -y install mysql-server python-mysqldb
 
-sudo sed -i "s/^bind\-address.*/bind-address = ${MYSQL_HOST}/g" /etc/mysql/my.cnf
+sudo sed -i "s/^bind\-address.*/bind-address = 0.0.0.0/g" /etc/mysql/my.cnf
+sudo sed -i "s/^#max_connections.*/max_connections = 512/g" /etc/mysql/my.cnf
+
+# Skip Name Resolve
+echo "[mysqld]
+skip-name-resolve" > /etc/mysql/conf.d/skip-name-resolve.cnf
+
+
+# UTF-8 Stuff
+echo "[mysqld]
+collation-server = utf8_general_ci
+init-connect='SET NAMES utf8'
+character-set-server = utf8" > /etc/mysql/conf.d/01-utf8.cnf
 
 sudo restart mysql
 
-sudo apt-get -y install keystone python-keyring
+# Ensure root can do its job
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"localhost\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"${MYSQL_HOST}\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
+mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"%\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
 
-mysql -uroot -p$MYSQL_ROOT_PASS -e "CREATE DATABASE keystone;"
+mysqladmin -uroot -p${MYSQL_ROOT_PASS} flush-privileges
 
-mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '$MYSQL_PASS';"
+######################
+# Chapter 1 KEYSTONE #
+######################
 
-sudo sed -i 's#^connection.*#connection = mysql://keystone:openstack@127.0.0.1/keystone#' /etc/keystone/keystone.conf
+# Create database
+sudo apt-get -y install ntp keystone python-keyring
 
-sudo sed -i 's/^# admin_token.*/admin_token = ADMIN/' /etc/keystone/keystone.conf
+# Config Files
+KEYSTONE_CONF=/etc/keystone/keystone.conf
+SSL_PATH=/etc/ssl/
 
-sudo stop keystone
-sudo start keystone
+MYSQL_ROOT_PASS=openstack
+MYSQL_KEYSTONE_PASS=openstack
+mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE keystone;'
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '$MYSQL_KEYSTONE_PASS';"
+mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '$MYSQL_KEYSTONE_PASS';"
 
-sudo keystone-manage db_sync
+sudo sed -i "s#^connection.*#connection = mysql://keystone:${MYSQL_KEYSTONE_PASS}@${MYSQL_HOST}/keystone#" ${KEYSTONE_CONF}
+sudo sed -i 's/^#admin_token.*/admin_token = ADMIN/' ${KEYSTONE_CONF}
+sudo sed -i 's,^#log_dir.*,log_dir = /var/log/keystone,' ${KEYSTONE_CONF}
+
+sudo echo "use_syslog = True" >> ${KEYSTONE_CONF}
+sudo echo "syslog_log_facility = LOG_LOCAL0" >> ${KEYSTONE_CONF}
 
 sudo apt-get -y install python-keystoneclient
 
-export ENDPOINT=127.0.0.1
-export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+sudo keystone-manage ssl_setup --keystone-user keystone --keystone-group keystone
+echo "
+[ssl]
+enable = True
+certfile = /etc/keystone/ssl/certs/keystone.pem
+keyfile = /etc/keystone/ssl/private/keystonekey.pem
+ca_certs = /etc/keystone/ssl/certs/ca.pem
+cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=${ETH3_IP}
+ca_key = /etc/keystone/ssl/certs/cakey.pem" | sudo tee -a ${KEYSTONE_CONF}
 
-# admin role
-keystone role-create --name admin
+rm -rf /etc/keystone/ssl
+sudo keystone-manage ssl_setup --keystone-user keystone --keystone-group keystone
+sudo cp /etc/keystone/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+sudo c_rehash /etc/ssl/certs/ca.pem
+sudo cp /etc/keystone/ssl/certs/cakey.pem /etc/ssl/certs/cakey.pem
+# This runs for both LDAP and non-LDAP configs
+create_endpoints(){
+  export ENDPOINT=${PUBLIC_IP}
+  export INT_ENDPOINT=${INT_IP}
+  export ADMIN_ENDPOINT=${ADMIN_IP}
+  export SERVICE_TOKEN=ADMIN
+  export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+  export PASSWORD=openstack
+  export OS_CACERT=/etc/ssl/certs/ca.pem
+  export OS_KEY=/etc/ssl/certs/cakey.pem
 
-# Member role
-keystone role-create --name Member
+   # OpenStack Compute Nova API Endpoint
+  keystone  service-create --name nova --type compute --description 'OpenStack Compute Service'
 
-keystone tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
+  # OpenStack Compute EC2 API Endpoint
+  keystone  service-create --name ec2 --type ec2 --description 'EC2 Service'
 
-TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
+  # Glance Image Service Endpoint
+  keystone  service-create --name glance --type image --description 'OpenStack Image Service'
 
-export PASSWORD=openstack
-keystone user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
+  # Keystone Identity Service Endpoint
+  keystone  service-create --name keystone --type identity --description 'OpenStack Identity Service'
 
-TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
+  # Cinder Block Storage Endpoint
+  keystone  service-create --name volume --type volume --description 'Volume Service'
 
-ROLE_ID=$(keystone role-list | awk '/\ admin\ / {print $2}')
+  # Neutron Network Service Endpoint
+  keystone  service-create --name network --type network --description 'Neutron Network Service'
 
-USER_ID=$(keystone user-list | awk '/\ admin\ / {print $2}')
+  # OpenStack Compute Nova API
+  NOVA_SERVICE_ID=$(keystone  service-list | awk '/\ nova\ / {print $2}')
 
-keystone user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+  PUBLIC="http://$ENDPOINT:8774/v2/\$(tenant_id)s"
+  ADMIN="http://$ADMIN_ENDPOINT:8774/v2/\$(tenant_id)s"
+  INTERNAL="http://$INT_ENDPOINT:8774/v2/\$(tenant_id)s"
 
-# Create the user
-PASSWORD=openstack
-keystone user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
+  keystone  endpoint-create --region regionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-TENANT_ID=$(keystone tenant-list | awk '/\ cookbook\ / {print $2}')
+  # OpenStack Compute EC2 API
+  EC2_SERVICE_ID=$(keystone  service-list | awk '/\ ec2\ / {print $2}')
 
-ROLE_ID=$(keystone role-list | awk '/\ Member\ / {print $2}')
+  PUBLIC="http://$ENDPOINT:8773/services/Cloud"
+  ADMIN="http://$ADMIN_ENDPOINT:8773/services/Admin"
+  INTERNAL="http://$INT_ENDPOINT:8773/services/Cloud"
 
-USER_ID=$(keystone user-list | awk '/\ demo\ / {print $2}')
+  keystone  endpoint-create --region regionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-# Assign the Member role to the demo user in cookbook
-keystone user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+  # Glance Image Service
+  GLANCE_SERVICE_ID=$(keystone  service-list | awk '/\ glance\ / {print $2}')
 
-# OpenStack Compute Nova API Endpoint
-keystone service-create --name nova --type compute --description 'OpenStack Compute Service'
+  PUBLIC="http://$ENDPOINT:9292/v2"
+  ADMIN="http://$ADMIN_ENDPOINT:9292/v2"
+  INTERNAL="http://$INT_ENDPOINT:9292/v2"
+  keystone  endpoint-create --region regionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-# OpenStack Compute EC2 API Endpoint
-keystone service-create --name ec2 --type ec2 --description 'EC2 Service'
+  # Keystone OpenStack Identity Service
+  KEYSTONE_SERVICE_ID=$(keystone  service-list | awk '/\ keystone\ / {print $2}')
 
-# Glance Image Service Endpoint
-keystone service-create --name glance --type image --description 'OpenStack Image Service'
+  PUBLIC="https://$ENDPOINT:5000/v2.0"
+  ADMIN="https://$ADMIN_ENDPOINT:35357/v2.0"
+  INTERNAL="https://$INT_ENDPOINT:5000/v2.0"
 
-# Keystone Identity Service Endpoint
-keystone service-create --name keystone --type identity --description 'OpenStack Identity Service'
+  keystone  endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-# Cinder Block Storage Endpoint
-keystone service-create --name volume --type volume --description 'Volume Service'
+  # Cinder Block Storage Service
+  CINDER_SERVICE_ID=$(keystone  service-list | awk '/\ volume\ / {print $2}')
 
-# OpenStack Compute Nova API
-NOVA_SERVICE_ID=$(keystone service-list | awk '/\ nova\ / {print $2}')
+  #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
+  CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
+  PUBLIC="http://$CINDER_ENDPOINT:8776/v1/%(tenant_id)s"
+  ADMIN=$PUBLIC
+  INTERNAL=$PUBLIC
 
-PUBLIC="http://$ENDPOINT:8774/v2/\$(tenant_id)s"
-ADMIN=$PUBLIC
-INTERNAL=$PUBLIC
+  keystone  endpoint-create --region regionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
-keystone endpoint-create --region RegionOne --service_id $NOVA_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  # Neutron Network Service
+  NEUTRON_SERVICE_ID=$(keystone  service-list | awk '/\ network\ / {print $2}')
 
-# OpenStack Compute EC2 API
-EC2_SERVICE_ID=$(keystone service-list | awk '/\ ec2\ / {print $2}')
+  PUBLIC="http://$ENDPOINT:9696"
+  ADMIN="http://$ADMIN_ENDPOINT:9696"
+  INTERNAL="http://$INT_ENDPOINT:9696"
 
-PUBLIC="http://$ENDPOINT:8773/services/Cloud"
-ADMIN="http://$ENDPOINT:8773/services/Admin"
-INTERNAL=$PUBLIC
+  keystone  endpoint-create --region regionOne --service_id $NEUTRON_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+}
 
-keystone endpoint-create --region RegionOne --service_id $EC2_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+# If LDAP is up, all the users/groups should be mapped already, leaving us to configure keystone and add in endpoints
+configure_keystone(){
+  echo "
+[identity]
+driver=keystone.identity.backends.ldap.Identity
 
-# Glance Image Service
-GLANCE_SERVICE_ID=$(keystone service-list | awk '/\ glance\ / {print $2}')
+[ldap]
+url = ldap://openldap
+user = cn=admin,ou=Users,dc=cook,dc=book
+password = openstack
+suffix = cn=cook,cn=book
 
-PUBLIC="http://$ENDPOINT:9292/v1"
-ADMIN=$PUBLIC
-INTERNAL=$PUBLIC
+user_tree_dn = ou=Users,dc=cook,dc=book
+user_objectclass = inetOrgPerson
+user_id_attribute = cn
+user_mail_attribute = mail
 
-keystone endpoint-create --region RegionOne --service_id $GLANCE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+user_enabled_attribute = userAccountControl
+user_enabled_mask      = 2
+user_enabled_default   = 512
 
-# Keystone OpenStack Identity Service
-KEYSTONE_SERVICE_ID=$(keystone service-list | awk '/\ keystone\ / {print $2}')
+tenant_tree_dn = ou=Groups,dc=cook,dc=book
+tenant_objectclass = groupOfNames
+tenant_id_attribute = cn
+tenant_desc_attribute = description
 
-PUBLIC="http://$ENDPOINT:5000/v2.0"
-ADMIN="http://$ENDPOINT:35357/v2.0"
-INTERNAL=$PUBLIC
+use_dumb_member = True
 
-keystone endpoint-create --region RegionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+role_tree_dn = ou=Roles,dc=cook,dc=book
+role_objectclass = organizationalRole
+role_id_attribute = cn
+role_member_attribute = roleOccupant" | sudo tee -a ${KEYSTONE_CONF}
 
-# Cinder Block Storage Service
-CINDER_SERVICE_ID=$(keystone service-list | awk '/\ volume\ / {print $2}')
+}
 
-PUBLIC="http://$ENDPOINT:8776/v1/%(tenant_id)s"
-ADMIN=$PUBLIC
-INTERNAL=$PUBLIC
+# Check if OpenLDAP is up and running, if so, configure keystone.
+if ping -c 1 openldap
+then
+  echo "[+] Found OpenLDAP, Configuring Keystone."
+  sudo stop keystone
+  sudo start keystone
+  sudo keystone-manage db_sync
+  create_endpoints
 
-keystone endpoint-create --region RegionOne --service_id $CINDER_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
+  configure_keystone
 
-# Service Tenant
-keystone tenant-create --name service --description "Service Tenant" --enabled true
+  sudo stop keystone
+  sudo start keystone
+else
+  echo "[+] OpenLDAP not found, moving along."
+  sudo stop keystone
+  sudo start keystone
+  sudo keystone-manage db_sync
 
-SERVICE_TENANT_ID=$(keystone tenant-list | awk '/\ service\ / {print $2}')
+  export ENDPOINT=${PUBLIC_IP}
+  export INT_ENDPOINT=${INT_IP}
+  export ADMIN_ENDPOINT=${ADMIN_IP}
+  export SERVICE_TOKEN=ADMIN
+  export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+  export PASSWORD=openstack
+  export OS_CACERT=/etc/ssl/certs/ca.pem
+  export OS_KEY=/etc/ssl/certs/cakey.pem
 
-keystone user-create --name nova --pass nova --tenant_id $SERVICE_TENANT_ID --email nova@localhost --enabled true
+  # admin role
+  keystone  role-create --name admin
 
-keystone user-create --name glance --pass glance --tenant_id $SERVICE_TENANT_ID --email glance@localhost --enabled true
+  # Member role
+  keystone  role-create --name Member
 
-keystone user-create --name keystone --pass keystone --tenant_id $SERVICE_TENANT_ID --email keystone@localhost --enabled true
+  keystone  role-list
 
-keystone user-create --name cinder --pass cinder --tenant_id $SERVICE_TENANT_ID --email cinder@localhost --enabled true
+  keystone  tenant-create --name cookbook --description "Default Cookbook Tenant" --enabled true
 
-# Get the nova user id
-NOVA_USER_ID=$(keystone user-list | awk '/\ nova\ / {print $2}')
+  TENANT_ID=$(keystone  tenant-list | awk '/\ cookbook\ / {print $2}')
 
-# Get the admin role id
-ADMIN_ROLE_ID=$(keystone role-list | awk '/\ admin\ / {print $2}')
+  keystone  user-create --name admin --tenant_id $TENANT_ID --pass $PASSWORD --email root@localhost --enabled true
+TENANT_ID=$(keystone  tenant-list | awk '/\ cookbook\ / {print $2}')
 
-# Assign the nova user the admin role in service tenant
-keystone user-role-add --user $NOVA_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+  ROLE_ID=$(keystone  role-list | awk '/\ admin\ / {print $2}')
 
-# Get the glance user id
-GLANCE_USER_ID=$(keystone user-list | awk '/\ glance\ / {print $2}')
+  USER_ID=$(keystone  user-list | awk '/\ admin\ / {print $2}')
 
-# Assign the glance user the admin role in service tenant
-keystone user-role-add --user $GLANCE_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+  keystone  user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
 
-# Get the keystone user id
-KEYSTONE_USER_ID=$(keystone user-list | awk '/\ keystone\ / {print $2}')
+  # Create the user
+  PASSWORD=openstack
+  keystone  user-create --name demo --tenant_id $TENANT_ID --pass $PASSWORD --email demo@localhost --enabled true
 
-# Assign the keystone user the admin role in service tenant
-keystone user-role-add --user $KEYSTONE_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+  TENANT_ID=$(keystone  tenant-list | awk '/\ cookbook\ / {print $2}')
 
-# Get the cinder user id
-CINDER_USER_ID=$(keystone user-list | awk '/\ cinder \ / {print $2}')
+  ROLE_ID=$(keystone  role-list | awk '/\ Member\ / {print $2}')
 
-# Assign the cinder user the admin role in service tenant
-keystone user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+  USER_ID=$(keystone  user-list | awk '/\ demo\ / {print $2}')
+
+  # Assign the Member role to the demo user in cookbook
+  keystone  user-role-add --user $USER_ID --role $ROLE_ID --tenant_id $TENANT_ID
+
+  create_endpoints
+
+  # Service Tenant
+  keystone  tenant-create --name service --description "Service Tenant" --enabled true
+
+  SERVICE_TENANT_ID=$(keystone  tenant-list | awk '/\ service\ / {print $2}')
+
+  keystone  user-create --name nova --pass nova --tenant_id $SERVICE_TENANT_ID --email nova@localhost --enabled true
+
+  keystone  user-create --name glance --pass glance --tenant_id $SERVICE_TENANT_ID --email glance@localhost --enabled true
+
+  keystone  user-create --name keystone --pass keystone --tenant_id $SERVICE_TENANT_ID --email keystone@localhost --enabled true
+
+  keystone  user-create --name cinder --pass cinder --tenant_id $SERVICE_TENANT_ID --email cinder@localhost --enabled true
+
+  keystone  user-create --name neutron --pass neutron --tenant_id $SERVICE_TENANT_ID --email neutron@localhost --enabled true
+
+  # Get the nova user id
+  NOVA_USER_ID=$(keystone  user-list | awk '/\ nova\ / {print $2}')
+
+  # Get the admin role id
+  ADMIN_ROLE_ID=$(keystone  role-list | awk '/\ admin\ / {print $2}')
+
+  # Assign the nova user the admin role in service tenant
+  keystone  user-role-add --user $NOVA_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
+  # Get the glance user id
+  GLANCE_USER_ID=$(keystone  user-list | awk '/\ glance\ / {print $2}')
+
+  # Assign the glance user the admin role in service tenant
+  keystone  user-role-add --user $GLANCE_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
+  # Get the keystone user id
+  KEYSTONE_USER_ID=$(keystone  user-list | awk '/\ keystone\ / {print $2}')
+
+  # Assign the keystone user the admin role in service tenant
+  keystone  user-role-add --user $KEYSTONE_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
+  # Get the cinder user id
+  CINDER_USER_ID=$(keystone  user-list | awk '/\ cinder \ / {print $2}')
+
+  # Assign the cinder user the admin role in service tenant
+  keystone  user-role-add --user $CINDER_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+
+  # Create neutron service user in the services tenant
+  NEUTRON_USER_ID=$(keystone  user-list | awk '/\ neutron \ / {print $2}')
+
+  # Grant admin role to neutron service user
+  keystone  user-role-add --user $NEUTRON_USER_ID --role $ADMIN_ROLE_ID --tenant_id $SERVICE_TENANT_ID
+fi
+

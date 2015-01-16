@@ -366,12 +366,14 @@ export OS_CACERT=/vagrant/ca.pem
 EOF
 
 # Create dispersion.conf
-#sudo tee /etc/swift/dispersion.conf >/dev/null <<EOF
-#[dispersion]
-#auth_url = https://${ENDPOINT}:5000/v2.0/
-#auth_user = cookbook:admin
-#auth_key = openstack
-#EOF
+sudo tee /etc/swift/dispersion.conf >/dev/null <<EOF
+[dispersion]
+auth_url = https://${ENDPOINT}:5000/v2.0/
+auth_user = cookbook:admin
+auth_key = openstack
+auth_version = 2.0
+keystone_api_insecure = yes
+EOF
 
 sudo chown -L -R swift.swift /etc/swift /srv/{1..4} /run/swift
 

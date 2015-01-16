@@ -6,17 +6,9 @@
 # Install some deps
 sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
 
-# Keys
-# Nova-Manage Hates Me
-ssh-keyscan controller >> ~/.ssh/known_hosts
-cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
-cp /vagrant/id_rsa* ~/.ssh/
-
-sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
-sudo c_rehash /etc/ssl/certs/ca.pem
-
 # The routeable IP of the node is on our eth1 interface
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+KEYSTONE_ENDPOINT=${ETH3_IP}
 
 swift_install() {
 	# Install some packages:
@@ -165,7 +157,7 @@ log_level = DEBUG
 
 [pipeline:main]
 # Order of execution of modules defined below
-pipeline = catch_errors healthcheck cache authtoken keystone proxy-server
+pipeline = catch_errors healthcheck cache container_sync authtoken keystone proxy-server
 
 [app:proxy-server]
 use = egg:swift#proxy
@@ -189,6 +181,9 @@ use = egg:swift#catch_errors
 use = egg:swift#memcache
 set log_name = cache
 
+[filter:container_sync]
+use = egg:swift#container_sync
+
 [filter:authtoken]
 paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
 auth_protocol = https
@@ -211,6 +206,15 @@ use = egg:swift#keystoneauth
 operator_roles = admin, Member
 #reseller_prefix = AUTH_
 EOF
+
+# container-sync-realms.conf for container sync
+cat > /etc/swift/container-sync-realms.conf <<EOF
+[realm1]
+key = realm1key
+cluster_swift = http://swift:8080/v1/
+cluster_swift2 = http://swift2:8080/v1/
+EOF
+
 
 # Setup Account Server
 sudo cat > /etc/swift/account-server/1.conf <<EOF
@@ -317,12 +321,15 @@ sudo cp /vagrant/remakerings.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/remakerings.sh
 sudo /usr/local/bin/remakerings.sh
 
-export ENDPOINT=localhost
+export ENDPOINT=${ETH3_IP}
 export SERVICE_TOKEN=ADMIN
-export SERVICE_ENDPOINT=http://${ENDPOINT}:35357/v2.0
+export SERVICE_ENDPOINT=https://${ENDPOINT}:35357/v2.0
+export OS_CACERT=/etc/ssl/certs/ca.pem
+export OS_KEY=/etc/ssl/certs/cakey.pem
+
 
 # Swift Proxy Address
-export SWIFT_PROXY_SERVER=$MY_IP
+export SWIFT_PROXY_SERVER=$ETH3_IP
 
 # Configure the OpenStack Storage Endpoint
 keystone service-create --name swift --type object-store --description 'OpenStack Storage Service'
@@ -357,8 +364,8 @@ export OS_USERNAME=swift
 export OS_PASSWORD=swift
 export OS_TENANT_NAME=service
 export OS_AUTH_URL=https://${ENDPOINT}:5000/v2.0/
-export OS_KEY=/vagrant/cakey.pem
-export OS_CACERT=/vagrant/ca.pem
+export OS_CACERT=/etc/ssl/certs/ca.pem
+export OS_KEY=/etc/ssl/certs/cakey.pem
 
 EOF
 

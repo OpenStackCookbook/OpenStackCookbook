@@ -668,7 +668,7 @@ sudo service neutron-server stop
 sudo service neutron-server start
 
 ######################
-# Chapter 3 COMPUTE  #
+# Chapter 4 COMPUTE  #
 ######################
 
 # Create database

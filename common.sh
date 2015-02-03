@@ -16,6 +16,10 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
+ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+
 #export CONTROLLER_HOST=172.16.0.200
 #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
 export CONTROLLER_HOST=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')

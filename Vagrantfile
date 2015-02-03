@@ -1,13 +1,21 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# If container_sync
+# enable swift2
+# configure swift and swift2 with container_sync configs (execute extra script at end)
+
+# If dvr
+# enable compute2
+# configure compute and compute2 for dvr
+
 nodes = {
 #    'openldap'  => [1, 199],
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [2, 202],
     'swift'   => [1, 210],
-    #'swift2'   => [1, 212],
+    'swift2'   => [1, 212],
     'cinder'   => [1, 211],
 }
 

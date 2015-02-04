@@ -71,6 +71,9 @@ cat > /etc/libvirt/libvirt.conf << EOF
 uri_default = "qemu:///system"
 EOF
 
+# configure libvirt-bin.conf
+sudo sed -i 's/env libvirtd_opts="-d"/env libvirtd_opts="-d -l"/g' /etc/init/libvirt-bin.conf
+
 # restart libvirt
 sudo service libvirt-bin restart
 

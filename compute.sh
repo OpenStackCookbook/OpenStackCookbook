@@ -37,9 +37,10 @@ sudo c_rehash /etc/ssl/certs/ca.pem
 nova_compute_install() {
 
 	# Install some packages:
-	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth
-	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent
-	#sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
+	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy
+	# install L3-Agent if using DVR
+	#sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent
+	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	sudo apt-get -y install vlan bridge-utils
 	sudo apt-get -y install libvirt-bin pm-utils sysfsutils
 	sudo service ntp restart
@@ -92,15 +93,18 @@ sudo ip link set eth2 promisc on
 # Assign IP to br-eth2 so it is accessible
 sudo ifconfig br-eth2 $ETH2_IP netmask 255.255.255.0
 
+#
+# Uncomment for DVR
+#
 # Neutron External Router Network
-sudo ovs-vsctl add-br br-ex
-sudo ovs-vsctl add-port br-ex eth3
-
-# In reality you would edit the /etc/network/interfaces file for eth3
-sudo ifconfig eth3 0.0.0.0 up
-sudo ip link set eth3 promisc on
-# Assign IP to br-ex so it is accessible
-sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
+#sudo ovs-vsctl add-br br-ex
+#sudo ovs-vsctl add-port br-ex eth3
+#
+## In reality you would edit the /etc/network/interfaces file for eth3
+#sudo ifconfig eth3 0.0.0.0 up
+#sudo ip link set eth3 promisc on
+## Assign IP to br-ex so it is accessible
+#sudo ifconfig br-ex $ETH3_IP netmask 255.255.255.0
 
 
 # Config Files
@@ -129,8 +133,8 @@ bind_port = 9696
 core_plugin = ml2
 service_plugins = router
 allow_overlapping_ips = True
-router_distributed = True
-dvr_base_mac = fa:16:3f:01:00:00
+#router_distributed = True
+#dvr_base_mac = fa:16:3f:01:00:00
 
 # auth
 auth_strategy = keystone
@@ -172,14 +176,14 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 EOF
 
-cat > ${NEUTRON_L3_AGENT_INI} << EOF
-[DEFAULT]
-interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
-use_namespaces = True
-agent_mode = dvr
-external_network_bridge = br-ex
-verbose = True
-EOF
+#cat > ${NEUTRON_L3_AGENT_INI} << EOF
+#[DEFAULT]
+#interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+#use_namespaces = True
+#agent_mode = dvr
+#external_network_bridge = br-ex
+#verbose = True
+#EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
@@ -202,15 +206,15 @@ vni_ranges = 1:1000
 [agent]
 tunnel_types = vxlan
 l2_population = True
-enable_distributed_routing = True
-arp_responder = True
+#enable_distributed_routing = True
+#arp_responder = True
 
 [ovs]
 local_ip = ${ETH2_IP}
 tunnel_type = vxlan
 enable_tunneling = True
 l2_population = True
-enable_distributed_routing = True
+#enable_distributed_routing = True
 tunnel_bridge = br-tun
 
 
@@ -308,9 +312,9 @@ service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-#metadata_host = ${MYSQL_HOST}
-#metadata_listen = ${MYSQL_HOST}
-#metadata_listen_port = 8775
+metadata_host = ${CONTROLLER_HOST}
+metadata_listen = ${CONTROLLER_HOST}
+metadata_listen_port = 8775
 
 # Cinder #
 volume_driver=nova.volume.driver.ISCSIDriver
@@ -332,14 +336,15 @@ keystone_ec2_url=https://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
-novncproxy_host=${ETH3_IP}
-novncproxy_base_url=http://${ETH3_IP}:6080/vnc_auto.html
+novncproxy_host=${CONTROLLER_EXTERNAL_HOST}
+novncproxy_base_url=http://${CONTROLLER_EXTERNAL_HOST}:6080/vnc_auto.html
 novncproxy_port=6080
-
+#
 xvpvncproxy_port=6081
-xvpvncproxy_host=${ETH3_IP}
-xvpvncproxy_base_url=http://${ETH3_IP}:6081/console
+xvpvncproxy_host=${CONTROLLER_EXTERNAL_HOST}
+xvpvncproxy_base_url=http://${CONTROLLER_EXTERNAL_HOST}:6081/console
 
+vnc_enabled = True
 vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 

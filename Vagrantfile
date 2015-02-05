@@ -14,8 +14,8 @@ nodes = {
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [2, 202],
-    'swift'   => [1, 210],
-    'swift2'   => [1, 212],
+    #'swift'   => [1, 210],
+    #'swift2'   => [1, 212],
     'cinder'   => [1, 211],
 }
 

@@ -551,7 +551,7 @@ bind_port = 9696
 
 # Plugin
 core_plugin = ml2
-service_plugins = router, firewall
+service_plugins = router
 allow_overlapping_ips = True
 #router_distributed = True
 router_distributed = False
@@ -765,9 +765,9 @@ service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-#metadata_host = ${MYSQL_HOST}
-#metadata_listen = ${MYSQL_HOST}
-#metadata_listen_port = 8775
+metadata_host = ${CONTROLLER_HOST}
+metadata_listen = ${CONTROLLER_HOST}
+metadata_listen_port = 8775
 
 # Cinder #
 volume_driver=nova.volume.driver.ISCSIDriver

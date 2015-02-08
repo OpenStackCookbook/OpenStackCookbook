@@ -37,7 +37,7 @@ sudo c_rehash /etc/ssl/certs/ca.pem
 nova_compute_install() {
 
 	# Install some packages:
-	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth
+	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth sasl2-bin
 	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-l3-agent
 	#sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	sudo apt-get -y install vlan bridge-utils
@@ -64,12 +64,16 @@ unix_sock_rw_perms = "0770"
 unix_sock_dir = "/var/run/libvirt"
 auth_unix_ro = "none"
 auth_unix_rw = "none"
+auth_tcp = "none"
 EOF
 
 # configure libvirtd.conf
 cat > /etc/libvirt/libvirt.conf << EOF
 uri_default = "qemu:///system"
 EOF
+
+# configure libvirt-bin.conf
+sudo sed -i 's/libvirtd_opts="-d"/libvirtd_opts="-d -l"/g' /etc/default/libvirt-bin
 
 # restart libvirt
 sudo service libvirt-bin restart
@@ -383,6 +387,13 @@ ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f
 sleep 30; echo "[+] Restarting nova-* on compute"
 nova_restart
 start neutron-l3-agent
+
+# Because live-migration
+# Do some terrible things for GID/UID mapping on compute nodes:
+UID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
+GID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
+sudo usermod -u $UID nova
+sudo groupmod -g $GID nova
 
 # Logging
 sudo stop rsyslog

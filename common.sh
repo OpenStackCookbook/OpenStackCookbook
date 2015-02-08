@@ -48,8 +48,8 @@ then
 # CookbookHosts
 192.168.100.200	controller.book controller
 192.168.100.201	network.book network
-192.168.100.202	compute.book compute
-192.168.100.203	compute2.book compute2
+192.168.100.202	compute-01.book compute-01
+192.168.100.203	compute-02.book compute-02
 192.168.100.210	swift.book swift
 192.168.100.212	swift2.book swift2
 192.168.100.211	cinder.book cinder" | sudo tee -a /etc/hosts

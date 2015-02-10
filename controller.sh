@@ -551,7 +551,8 @@ bind_port = 9696
 
 # Plugin
 core_plugin = ml2
-service_plugins = router
+#service_plugins = router, firewall
+service_plugins = router, neutron.services.vpn.plugin.VPNDriverPlugin
 allow_overlapping_ips = True
 #router_distributed = True
 router_distributed = False
@@ -620,8 +621,8 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 [service_providers]
 #service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
-#service_provider = FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+#service_provider=FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
 EOF
 

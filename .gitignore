@@ -8,3 +8,4 @@ packer_cache/
 *.box
 *.pub
 *.pem
+cinder.2nd_edition

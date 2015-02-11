@@ -27,6 +27,7 @@ export GLANCE_HOST=${CONTROLLER_HOST}
 export MYSQL_HOST=${CONTROLLER_HOST}
 export KEYSTONE_ADMIN_ENDPOINT=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')
 export KEYSTONE_ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
+export CONTROLLER_EXTERNAL_HOST=${KEYSTONE_ADMIN_ENDPOINT}
 export MYSQL_NEUTRON_PASS=openstack
 export SERVICE_TENANT_NAME=service
 export SERVICE_PASS=openstack
@@ -48,8 +49,8 @@ then
 # CookbookHosts
 192.168.100.200	controller.book controller
 192.168.100.201	network.book network
-192.168.100.202	compute.book compute
-192.168.100.203	compute2.book compute2
+192.168.100.202	compute-01.book compute-01
+192.168.100.203	compute-02.book compute-02
 192.168.100.210	swift.book swift
 192.168.100.212	swift2.book swift2
 192.168.100.211	cinder.book cinder" | sudo tee -a /etc/hosts

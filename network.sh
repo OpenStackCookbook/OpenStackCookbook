@@ -34,7 +34,8 @@ sudo apt-get -y install linux-headers-`uname -r`
 sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
 sudo c_rehash /etc/ssl/certs/ca.pem
 sudo apt-get -y install vlan bridge-utils dnsmasq-base dnsmasq-utils
-sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent ipset python-mysqldb
+#sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent ipset python-mysqldb
+sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-dhcp-agent ipset python-mysqldb openswan neutron-vpn-agent
 
 sudo /etc/init.d/openvswitch-switch start
 
@@ -73,6 +74,8 @@ NEUTRON_L3_AGENT_INI=/etc/neutron/l3_agent.ini
 NEUTRON_DHCP_AGENT_INI=/etc/neutron/dhcp_agent.ini
 NEUTRON_DNSMASQ_CONF=/etc/neutron/dnsmasq-neutron.conf
 NEUTRON_METADATA_AGENT_INI=/etc/neutron/metadata_agent.ini
+NEUTRON_FWAAS_DRIVER_INI=/etc/neutron/fwaas_driver.ini
+NEUTRON_VPNAAS_AGENT_INI=/etc/neutron/vpn_agent.ini
 
 SERVICE_TENANT=service
 NEUTRON_SERVICE_USER=neutron
@@ -94,9 +97,11 @@ bind_port = 9696
 
 # Plugin
 core_plugin = ml2
-service_plugins = router
+# service_plugins: router firewall lbaas vpn
+#service_plugins = router,firewall
+service_plugins = router, neutron.services.vpn.plugin.VPNDriverPlugin
 allow_overlapping_ips = True
-router_distributed = True
+#router_distributed = True
 
 # auth
 auth_strategy = keystone
@@ -133,7 +138,8 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 [service_providers]
 #service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+#service_provider=FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
 EOF
 
@@ -141,7 +147,7 @@ cat > ${NEUTRON_L3_AGENT_INI} << EOF
 [DEFAULT]
 interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
 use_namespaces = True
-agent_mode = dvr_snat
+#agent_mode = dvr_snat
 external_network_bridge = br-ex
 verbose = True
 EOF
@@ -193,15 +199,15 @@ vni_ranges = 1:1000
 [agent]
 tunnel_types = vxlan
 l2_population = True
-enable_distributed_routing = True
-arp_responder = True
+#enable_distributed_routing = True
+#arp_responder = True
 
 [ovs]
 local_ip = ${ETH2_IP}
 tunnel_type = vxlan
 enable_tunneling = True
 l2_population = True
-enable_distributed_routing = True
+#enable_distributed_routing = True
 tunnel_bridge = br-tun
 
 [securitygroup]
@@ -209,6 +215,22 @@ firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewal
 enable_security_group = True
 EOF
 
+cat > ${NEUTRON_FWAAS_DRIVER_INI} <<EOF
+[fwaas]
+driver = neutron.services.firewall.drivers.linux.iptables_fwaas.IptablesFwaasDriver
+enabled = True
+EOF
+
+cat > ${NEUTRON_VPNAAS_AGENT_INI} <<EOF
+[DEFAULT]
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+
+[vpnagent]
+vpn_device_driver=neutron.services.vpn.device_drivers.ipsec.OpenSwanDriver
+
+[ipsec]
+ipsec_status_check_interval=60
+EOF
 
 echo "
 Defaults !requiretty
@@ -218,8 +240,11 @@ neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 # Restart Neutron Services
 sudo service neutron-plugin-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
-sudo service neutron-l3-agent stop # DVR
+#sudo service neutron-l3-agent stop # DVR SO DONT RUN
+#sudo service neutron-l3-agent start # NON-DVR
 sudo service neutron-metadata-agent restart
+sudo service neutron-vpn-agent stop
+sudo service neutron-vpn-agent start
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 

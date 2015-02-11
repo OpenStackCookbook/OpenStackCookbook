@@ -551,9 +551,11 @@ bind_port = 9696
 
 # Plugin
 core_plugin = ml2
-service_plugins = router
+#service_plugins = router, firewall
+service_plugins = router, neutron.services.vpn.plugin.VPNDriverPlugin
 allow_overlapping_ips = True
-router_distributed = True
+#router_distributed = True
+router_distributed = False
 
 # auth
 auth_strategy = keystone
@@ -576,7 +578,7 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 notify_nova_on_port_status_changes = True
 notify_nova_on_port_data_changes = True
 nova_url = http://${CONTROLLER_HOST}:8774/v2
-nova_region_name = RegionOne
+nova_region_name = regionOne
 nova_admin_username = ${NOVA_SERVICE_USER}
 nova_admin_tenant_id = ${SERVICE_TENANT_ID}
 nova_admin_password = ${NOVA_SERVICE_PASS}
@@ -619,7 +621,8 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 [service_providers]
 #service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+#service_provider=FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
 EOF
 
@@ -701,6 +704,15 @@ sudo /etc/init.d/rabbitmq-server restart
 # Clobber the nova.conf file with the following
 NOVA_CONF=/etc/nova/nova.conf
 
+# Qemu or KVM (VT-x/AMD-v)
+KVM=$(egrep '(vmx|svm)' /proc/cpuinfo)
+if [[ ${KVM} ]]
+then
+        LIBVIRT=kvm
+else
+        LIBVIRT=qemu
+fi
+
 cp ${NOVA_CONF}{,.bak}
 cat > ${NOVA_CONF} <<EOF
 [DEFAULT]
@@ -721,7 +733,7 @@ enabled_apis=ec2,osapi_compute,metadata
 # Libvirt and Virtualization
 libvirt_use_virtio_for_bridges=True
 connection_type=libvirt
-libvirt_type=qemu
+libvirt_type=${LIBVIRT}
 
 # Database
 sql_connection=mysql://nova:${MYSQL_NOVA_PASS}@${MYSQL_HOST}/nova
@@ -754,9 +766,9 @@ service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
 
 #Metadata
-#metadata_host = ${MYSQL_HOST}
-#metadata_listen = ${MYSQL_HOST}
-#metadata_listen_port = 8775
+metadata_host = ${CONTROLLER_HOST}
+metadata_listen = ${CONTROLLER_HOST}
+metadata_listen_port = 8775
 
 # Cinder #
 volume_driver=nova.volume.driver.ISCSIDriver

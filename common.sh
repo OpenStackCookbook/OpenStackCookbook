@@ -27,6 +27,7 @@ export GLANCE_HOST=${CONTROLLER_HOST}
 export MYSQL_HOST=${CONTROLLER_HOST}
 export KEYSTONE_ADMIN_ENDPOINT=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.200/')
 export KEYSTONE_ENDPOINT=${KEYSTONE_ADMIN_ENDPOINT}
+export CONTROLLER_EXTERNAL_HOST=${KEYSTONE_ADMIN_ENDPOINT}
 export MYSQL_NEUTRON_PASS=openstack
 export SERVICE_TENANT_NAME=service
 export SERVICE_PASS=openstack

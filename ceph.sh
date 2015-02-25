@@ -30,7 +30,7 @@
 set -e
 set -u
 
-DIR=$1
+DIR=cookbook-osd
 
 if ! dpkg -l ceph ; then
  wget -q -O- 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | sudo apt-key add -

@@ -84,7 +84,7 @@ FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
 neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
 
 cinder create --display-name demo 1
-VOLUME_ID=$(cinder list | awk '/\ cookbook\ / {print $2}')
-INSTANCE_ID=$(nova list | awk '/\ demo\ / {print $2}')
+
+INSTANCE_ID=$(nova list | awk '/\ test1\ / {print $2}')
 
 nova volume-attach $INSTANCE_ID $VOLUME_ID /dev/vdc

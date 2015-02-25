@@ -21,6 +21,12 @@ cp /vagrant/id_rsa* ~/.ssh/
 
 sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
 sudo c_rehash /etc/ssl/certs/ca.pem
+
+## Check /vagrant/cinder.ini for "ceph" if so, do the ceph things.
+if grep -q ceph "/vagrant/ceph.ini"; then
+	echo "doing ceph"
+	exit
+else
 # Install Cinder Things
 sudo apt-get install -y cinder-api cinder-scheduler cinder-volume open-iscsi python-cinderclient tgt
 
@@ -84,6 +90,7 @@ vgcreate cinder-volumes /dev/loop2
 
 # Restart services
 cd /etc/init/; for c in $( ls cinder-* | cut -d '.' -f1) ; do sudo stop $c; start $c; done
+fi
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 

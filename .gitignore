@@ -9,3 +9,5 @@ packer_cache/
 *.pub
 *.pem
 cinder.2nd_edition
+cinder.ini
+ceph.conf

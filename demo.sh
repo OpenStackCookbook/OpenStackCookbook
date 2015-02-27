@@ -86,5 +86,8 @@ neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
 cinder create --display-name demo 1
 
 INSTANCE_ID=$(nova list | awk '/\ test1\ / {print $2}')
+VOLUME_ID=$(nova volume-list | awk '/\ demo\ / {print $2}')
 
+echo "[+] Sleeping 60 seconds for instance to become available"
+sleep 60
 nova volume-attach $INSTANCE_ID $VOLUME_ID /dev/vdc

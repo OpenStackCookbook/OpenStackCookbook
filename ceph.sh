@@ -99,6 +99,8 @@ rados --pool data get group ${DIR}/group
 diff /etc/group ${DIR}/group
 ceph osd tree
 
+cp ${DIR}/ceph.conf /vagrant/
+
 # display usage instructions
 echo export CEPH_ARGS="'--conf ${DIR}/ceph.conf'"
 echo ceph osd tree

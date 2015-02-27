@@ -10,4 +10,3 @@ packer_cache/
 *.pem
 cinder.2nd_edition
 cinder.ini
-ceph.conf

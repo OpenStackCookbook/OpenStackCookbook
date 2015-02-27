@@ -10,7 +10,6 @@
 # configure compute and compute2 for dvr
 
 nodes = {
-    'ceph'     => [1, 220],
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [2, 202],

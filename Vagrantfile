@@ -10,14 +10,13 @@
 # configure compute and compute2 for dvr
 
 nodes = {
-#    'openldap'  => [1, 199],
+    'ceph'     => [1, 220],
     'controller'  => [1, 200],
     'network'  => [1, 201],
     'compute'  => [2, 202],
     #'swift'   => [1, 210],
     #'swift2'  => [1, 212],
     'cinder'   => [1, 211],
-    'ceph'     => [1, 220],
 }
 
 Vagrant.configure("2") do |config|
@@ -46,7 +45,6 @@ Vagrant.configure("2") do |config|
     vmware.vmx["unity.wasCapable"] = "FALSE"
     vmware.vmx["vhv.enable"] = "TRUE"
   end
-
 
   #Default is 2200..something, but port 2200 is used by forescout NAC agent.
   config.vm.usable_port_range= 2800..2900 

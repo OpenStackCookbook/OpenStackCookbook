@@ -18,6 +18,15 @@ CINDER_SERVICE_USER=cinder
 CINDER_SERVICE_PASS=cinder
 MYSQL_CINDER_PASS=openstack
 
+
+
+
+
+######################
+# Chapter 8 - Cinder #
+######################
+
+
 # Install some deps
 sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
 

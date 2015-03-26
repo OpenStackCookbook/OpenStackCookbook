@@ -25,7 +25,7 @@ ADMIN_IP=${ETH3_IP}
 #export LANG=C
 
 # MySQL
-export MYSQL_HOST=$ETH3_IP
+export MYSQL_HOST=${ETH3_IP}
 export MYSQL_ROOT_PASS=openstack
 export MYSQL_DB_PASS=openstack
 
@@ -58,6 +58,11 @@ mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"$
 mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"%\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"
 
 mysqladmin -uroot -p${MYSQL_ROOT_PASS} flush-privileges
+
+
+
+
+
 
 ######################
 # Chapter 1 KEYSTONE #
@@ -346,6 +351,11 @@ else
 fi
 
 
+
+
+
+
+
 ######################
 # Chapter 2 GLANCE   #
 ######################
@@ -353,7 +363,7 @@ fi
 # Install Service
 sudo apt-get update
 sudo apt-get -y install glance
-sudo apt-get -y install python-glanceclient 
+sudo apt-get -y install python-glanceclient
 
 # Config Files
 GLANCE_API_CONF=/etc/glance/glance-api.conf
@@ -511,9 +521,16 @@ glance  image-create --name='cirros-image' --disk-format=qcow2 --container-forma
 
 echo "[+] Image upload done."
 
-#####################
-# Neutron           #
-#####################
+
+
+
+
+
+
+#######################
+# Chapter 3 Neutron   #
+# See also network.sh #
+#######################
 
 # Create database
 MYSQL_ROOT_PASS=openstack
@@ -552,7 +569,7 @@ bind_port = 9696
 # Plugin
 core_plugin = ml2
 #service_plugins = router, firewall
-service_plugins = router, neutron.services.vpn.plugin.VPNDriverPlugin
+service_plugins = router, lbaas
 allow_overlapping_ips = True
 #router_distributed = True
 router_distributed = False
@@ -620,8 +637,8 @@ insecure = True
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 [service_providers]
-#service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 #service_provider=FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
 EOF
@@ -650,7 +667,7 @@ l2_population = True
 tunnel_types = vxlan
 ## VXLAN udp port
 # This is set for the vxlan port and while this
-# is being set here it's ignored because 
+# is being set here it's ignored because
 # the port is assigned by the kernel
 vxlan_udp_port = 4789
 
@@ -670,9 +687,14 @@ sudo neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /et
 sudo service neutron-server stop
 sudo service neutron-server start
 
-######################
-# Chapter 4 COMPUTE  #
-######################
+
+
+
+
+########################
+# Chapter 4 - Compute  #
+# See also compute.sh  #
+########################
 
 # Create database
 MYSQL_HOST=${ETH3_IP}
@@ -832,9 +854,15 @@ sudo start nova-cert
 sudo start nova-consoleauth
 sudo start nova-novncproxy
 
-##########
-# Cinder #
-##########
+
+
+
+
+######################
+# Chapter 8 - Cinder #
+# See also cinder.sh #
+######################
+
 # Install the DB
 MYSQL_ROOT_PASS=openstack
 MYSQL_CINDER_PASS=openstack
@@ -842,9 +870,14 @@ mysql -uroot -p$MYSQL_ROOT_PASS -e 'CREATE DATABASE cinder;'
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY '$MYSQL_CINDER_PASS';"
 mysql -uroot -p$MYSQL_ROOT_PASS -e "GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%' IDENTIFIED BY '$MYSQL_CINDER_PASS';"
 
-###########
-# Horizon #
-###########
+
+
+
+
+########################
+# Chapter 10 - Horizon #
+########################
+
 # Install dependencies
 sudo apt-get install -y memcached
 
@@ -1446,25 +1479,49 @@ export OS_KEY=/vagrant/cakey.pem
 export OS_CACERT=/vagrant/ca.pem
 EOF
 
+
+
+
+
 # Hack: restart neutron again...
 service neutron-server restart
 
-# Heat
+
+
+
+####################
+# Chapter 9 - Heat #
+# (More OpenStack) #
+####################
+
 echo "[+] Executing Heat installation script"
 sudo /vagrant/heat.sh
-echo "[+] Heat installation complete." 
+echo "[+] Heat installation complete."
 
-# Ceilometer
+
+
+#########################
+# Chapter 9 -Ceilometer #
+# (More OpenStack)      #
+#########################
+
 echo "[+] Executing Ceilometer installation script"
 sudo /vagrant/ceilometer.sh
-echo "[+] Ceilometer install complete." 
+echo "[+] Ceilometer install complete."
+
+
 
 # Sort out keys for root user
 sudo ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa
 rm -f /vagrant/id_rsa*
 sudo cp /root/.ssh/id_rsa /vagrant
 sudo cp /root/.ssh/id_rsa.pub /vagrant
-cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys 
+cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
-# Logstash & Kibana
+
+
+##################################
+# Chapter 12 - Logstash & Kibana #
+# (Production OpenStack)         #
+##################################
 # sudo /vagrant/logstash.sh

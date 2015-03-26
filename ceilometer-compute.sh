@@ -7,6 +7,13 @@
 # Source in common env vars
 . /vagrant/common.sh
 
+
+
+
+##############################
+# Chapter 9 - More OpenStack #
+##############################
+
 # Install Ceilometer Things
 sudo apt-get -y install ceilometer-agent-compute
 

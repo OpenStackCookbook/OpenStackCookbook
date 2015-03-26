@@ -1,0 +1,178 @@
+heat_template_version: 2013-05-23
+
+description: >
+  HOT template to deploy two instances running Apache, and an extra instance running
+  HA Proxy that load balances traffic between then assigns a floating IP addresses 
+  to the HA Proxy instance from the Public Network
+
+parameters:
+  key_name:
+    type: string
+    description: Name of keypair to assign to servers
+  image:
+    type: string
+    description: Name of image to use for servers
+  flavor:
+    type: string
+    description: Flavor to use for servers
+  public_net_id:
+    type: string
+    description: >
+      ID of public network for which floating IP addresses will be allocated
+  private_net_id:
+    type: string
+    description: ID of private network into which servers get deployed
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which servers get deployed
+
+resources:
+  webserver1:
+    type: OS::Nova::Server
+    properties:
+      name: Webserver1
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: webserver1_port }
+      config_drive: "true"
+      user_data: |
+        #!/bin/bash -v
+        export DEBIAN_FRONTEND=noninteractive
+        export http_proxy=http://192.168.100.1:3128/
+        apt-get update
+        apt-get -y install apache2
+
+  webserver1_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_resource: server_security_group }]
+
+  webserver2:
+    type: OS::Nova::Server
+    properties:
+      name: Webserver2
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: webserver2_port }
+      config_drive: "true"
+      user_data: |
+        #!/bin/bash -v
+        export DEBIAN_FRONTEND=noninteractive
+        export http_proxy=http://192.168.100.1:3128/
+        apt-get update
+        apt-get -y install apache2
+
+  webserver2_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_resource: server_security_group }]
+
+  haproxy:
+    type: OS::Nova::Server
+    properties:
+      name: HAProxy
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: haproxy_port }
+      config_drive: "true"
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            #Install and configure haproxy
+            export DEBIAN_FRONTEND=noninteractive
+            export http_proxy=http://192.168.100.1:3128/
+            apt-get update
+            apt-get -y install haproxy
+            rm -rf /etc/haproxy/haproxy.cfg
+            echo "
+            global
+                log 127.0.0.1 local0 debug
+                maxconn   45000 # Total Max Connections. This is dependent on ul                    imit
+                user haproxy
+                group haproxy
+                daemon
+
+            defaults
+                    log global
+                    mode http
+                    option dontlognull
+                    retries 3
+                    option redispatch
+                    timeout server 86400000
+                    timeout connect 86400000
+                    timeout client 86400000
+                    timeout queue   1000s
+
+            listen  http_web 0.0.0.0:80
+                   mode http
+                   stats enable
+                    stats uri /haproxy?stats
+                    option httpclose
+                    option forwardfor
+                    balance roundrobin # Load Balancing algorithm
+                    server Webserver1 %webserver1_ip% check
+                    server Webserver2 %webserver2_ip% check
+                    " >> /etc/haproxy/haproxy.cfg
+            sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/haproxy
+            service haproxy start
+
+          params:
+            "%webserver1_ip%": { get_attr: [ webserver1, first_address ] }
+            "%webserver2_ip%": { get_attr: [ webserver2, first_address ] }
+
+  haproxy_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      security_groups: [{ get_resource: server_security_group }]
+
+  haproxy_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: haproxy_port }
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Webserver Rules
+      name: webserver
+      rules:
+      - direction: ingress
+        ethertype: IPv4
+        port_range_max: 22
+        port_range_min: 22
+        protocol: tcp
+        remote_ip_prefix: 0.0.0.0/0
+      - direction: ingress
+        ethertype: IPv4
+        port_range_min: 80
+        port_range_max: 80
+        protocol: tcp
+        remote_ip_prefix: 0.0.0.0/0
+
+outputs:
+  webserver1_private_ip:
+    description: IP address of webserver1 in private network
+    value: { get_attr: [ webserver1, first_address ] }
+  webserver2_private_ip:
+    description: IP address of webserver2 in private network
+    value: { get_attr: [ webserver2, first_address ] }
+  haproxy_public_ip:
+    description: Floating IP address of haproxy in public network
+    value: { get_attr: [ haproxy_floating_ip, floating_ip_address ] }

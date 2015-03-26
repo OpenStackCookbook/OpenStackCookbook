@@ -7,6 +7,15 @@
 # Source in common env vars
 . /vagrant/common.sh
 
+
+
+
+
+##############################
+# Chapter 9 - More OpenStack #
+##############################
+
+
 # Install Ceilometer Things
 sudo apt-get -y install ceilometer-api ceilometer-collector ceilometer-agent-central python-ceilometerclient mongodb
 

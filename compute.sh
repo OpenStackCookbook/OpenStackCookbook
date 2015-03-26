@@ -18,6 +18,13 @@ ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
+
+
+
+#######################
+# Chapter 4 - Compute #
+#######################
+
 # Must define your environment
 MYSQL_HOST=${CONTROLLER_HOST}
 GLANCE_HOST=${CONTROLLER_HOST}
@@ -47,7 +54,7 @@ nova_compute_install() {
 
 nova_configure() {
 
-# Networking 
+# Networking
 # ip forwarding
 echo "net.ipv4.ip_forward=1
 net.ipv4.conf.all.rp_filter=0
@@ -80,7 +87,7 @@ sudo service libvirt-bin restart
 
 # OpenVSwitch
 sudo apt-get install -y linux-headers-`uname -r` build-essential
-sudo apt-get install -y openvswitch-switch 
+sudo apt-get install -y openvswitch-switch
 
 # OpenVSwitch Configuration
 #br-int will be used for VM integration
@@ -179,6 +186,10 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 #service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 
 EOF
+
+#
+# Chapter 3 - Networking DVR
+#
 
 #cat > ${NEUTRON_L3_AGENT_INI} << EOF
 #[DEFAULT]
@@ -366,6 +377,11 @@ sudo chmod 0640 $NOVA_CONF
 sudo chown nova:nova $NOVA_CONF
 
 }
+
+
+##############################
+# Chapter 9 - More OpenStack #
+##############################
 
 nova_ceilometer() {
 	/vagrant/ceilometer-compute.sh

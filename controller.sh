@@ -1434,6 +1434,9 @@ export OS_KEY=/vagrant/cakey.pem
 export OS_CACERT=/vagrant/ca.pem
 EOF
 
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 
+
 # Hack: restart neutron again...
 service neutron-server restart
 

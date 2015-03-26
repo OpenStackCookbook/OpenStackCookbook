@@ -389,3 +389,6 @@ swift_restart(){
 swift_install
 swift_configure
 swift_restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

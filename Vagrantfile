@@ -9,6 +9,9 @@
 # enable compute2
 # configure compute and compute2 for dvr
 
+# Uncomment the next line to force use of VirtualBox provider when Fusion provider is present
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+
 nodes = {
     'controller'  => [1, 200],
     'network'  => [1, 201],

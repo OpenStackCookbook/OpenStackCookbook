@@ -1469,7 +1469,7 @@ sudo echo "\$ModLoad imtcp" >> /etc/rsyslog.conf
 sudo echo "\$InputTCPServerRun 5140" >> /etc/rsyslog.conf
 sudo restart rsyslog
 
-# Create a .stackrc file
+# Create an openrc  file
 cat > /vagrant/openrc <<EOF
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
@@ -1479,9 +1479,8 @@ export OS_KEY=/vagrant/cakey.pem
 export OS_CACERT=/vagrant/ca.pem
 EOF
 
-
-
-
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 
 
 # Hack: restart neutron again...
 service neutron-server restart

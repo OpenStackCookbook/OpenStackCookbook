@@ -421,3 +421,6 @@ sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

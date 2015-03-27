@@ -72,6 +72,16 @@ rabbit_host = ${CONTROLLER_HOST}
 rabbit_port = 5672
 state_path = /var/lib/cinder/
 
+glance_host = ${CONTROLLER_HOST}
+glance_port = 9292
+glance_api_servers = \$glance_host:\$glance_port
+
+scheduler_topic=cinder-scheduler
+volume-topic=cinder-volume
+backup-topic=cinder-backup
+
+scheduler_manager=cinder.scheduler.manager.SchedulerManager
+
 [database]
 backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
@@ -97,7 +107,7 @@ else
 	# Restart services
 	sudo service open-iscsi start
 
-	dd if=/dev/zero of=cinder-volumes bs=1 count=0 seek=5G
+	dd if=/dev/zero of=cinder-volumes bs=1 count=0 seek=20G
 
 	losetup /dev/loop2 cinder-volumes
 	pvcreate /dev/loop2
@@ -121,6 +131,17 @@ auth_strategy = keystone
 rabbit_host = ${CONTROLLER_HOST}
 rabbit_port = 5672
 state_path = /var/lib/cinder/
+
+glance_host = ${CONTROLLER_HOST}
+glance_port = 9292
+glance_api_servers = \$glance_host:\$glance_port
+
+scheduler_topic=cinder-scheduler
+volume-topic=cinder-volume
+backup-topic=cinder-backup
+
+scheduler_manager=cinder.scheduler.manager.SchedulerManager
+
 
 [database]
 backend=sqlalchemy

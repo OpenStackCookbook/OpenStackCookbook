@@ -30,6 +30,13 @@ cp /vagrant/id_rsa* ~/.ssh/
 sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
 sudo c_rehash /etc/ssl/certs/ca.pem
 
+# Configure Cinder
+# /etc/cinder/api-paste.ini
+sudo sed -i 's/127.0.0.1/'${CONTROLLER_HOST}'/g' /etc/cinder/api-paste.ini
+sudo sed -i 's/%SERVICE_TENANT_NAME%/service/g' /etc/cinder/api-paste.ini
+sudo sed -i 's/%SERVICE_USER%/cinder/g' /etc/cinder/api-paste.ini
+sudo sed -i 's/%SERVICE_PASSWORD%/cinder/g' /etc/cinder/api-paste.ini
+
 ## Check /vagrant/cinder.ini for "nfs" if so, do nfs things.
 if grep -q nfs "/vagrant/cinder.ini"; then
 	echo "[+] Installing NFS Server"
@@ -46,7 +53,7 @@ if grep -q nfs "/vagrant/cinder.ini"; then
 	echo "[+] Installing Cinder"
 	sudo apt-get install -y cinder-api cinder-scheduler cinder-volume python-cinderclient
 	sudo echo "cinder.book:/exports" >> /etc/cinder/nfsshares
-	cat > /etc/cinder/cinder.conf <<EOF
+	cat > ${CINDER_CONF} <<EOF
 [DEFAULT]
 rootwrap_config=/etc/cinder/rootwrap.conf
 api_paste_config = /etc/cinder/api-paste.ini
@@ -62,6 +69,17 @@ auth_strategy = keystone
 rabbit_host = ${CONTROLLER_HOST}
 rabbit_port = 5672
 state_path = /var/lib/cinder/
+
+# Default glance port (integer value)
+glance_port=9292
+glance_api_servers=${CONTROLLER_HOST}:${glance_port}
+glance_api_version=1
+glance_num_retries=0
+glance_api_insecure=True
+
+scheduler_topic=cinder-scheduler
+volume-topic=cinder-volume
+backup-topic=cinder-backup
 
 [database]
 backend=sqlalchemy
@@ -88,15 +106,16 @@ else
 	# Restart services
 	sudo service open-iscsi start
 
-	dd if=/dev/zero of=cinder-volumes bs=1 count=0 seek=5G
+	dd if=/dev/zero of=cinder-volumes bs=1 count=0 seek=20G
 
 	losetup /dev/loop2 cinder-volumes
 	pvcreate /dev/loop2
 	vgcreate cinder-volumes /dev/loop2
+	glance_port=9292
 
 	echo "[+] Installing Cinder"
 	sudo apt-get install -y cinder-api cinder-scheduler cinder-volume python-cinderclient
-	cat > /etc/cinder/cinder.conf <<EOF
+	cat > ${CINDER_CONF} <<EOF
 [DEFAULT]
 rootwrap_config=/etc/cinder/rootwrap.conf
 api_paste_config = /etc/cinder/api-paste.ini
@@ -112,6 +131,17 @@ auth_strategy = keystone
 rabbit_host = ${CONTROLLER_HOST}
 rabbit_port = 5672
 state_path = /var/lib/cinder/
+
+# Default glance port (integer value)
+glance_port=9292
+glance_api_servers=${CONTROLLER_HOST}:${glance_port}
+glance_api_version=1
+glance_num_retries=0
+glance_api_insecure=True
+
+scheduler_topic=cinder-scheduler
+volume-topic=cinder-volume
+backup-topic=cinder-backup
 
 [database]
 backend=sqlalchemy
@@ -130,6 +160,9 @@ insecure = True
 EOF
 
 fi
+
+sleep 5
+
 # Sync DB
 cinder-manage db sync
 

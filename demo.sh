@@ -59,10 +59,9 @@ cp demokey /vagrant
 UBUNTU=$(nova image-list \
   | awk '/\ trusty/ {print $2}')
 
-
 NET_ID=$(neutron net-list | awk '/cookbook_network_1/ {print $2}')
-
-nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
+nova boot --flavor m1.medium --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true test1
+#nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
 
 neutron net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
 
@@ -82,12 +81,3 @@ neutron floatingip-create --tenant-id ${TENANT_ID} ext_net
 VM_PORT=$(neutron port-list | awk '/11.200.0.2/ {print $2}')
 FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
 neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
-
-cinder create --display-name demo 1
-
-INSTANCE_ID=$(nova list | awk '/\ test1\ / {print $2}')
-VOLUME_ID=$(nova volume-list | awk '/\ demo\ / {print $2}')
-
-echo "[+] Sleeping 60 seconds for instance to become available"
-sleep 60
-nova volume-attach $INSTANCE_ID $VOLUME_ID /dev/vdc

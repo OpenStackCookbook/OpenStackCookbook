@@ -17,6 +17,7 @@
 ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
 
 # Must define your environment
 MYSQL_HOST=${CONTROLLER_HOST}
@@ -325,7 +326,7 @@ volume_driver=nova.volume.driver.ISCSIDriver
 enabled_apis=ec2,osapi_compute,metadata
 volume_api_class=nova.volume.cinder.API
 iscsi_helper=tgtadm
-iscsi_ip_address=${CONTROLLER_HOST}
+iscsi_ip_address=${CINDER_ENDPOINT}
 
 # Images
 image_service=nova.image.glance.GlanceImageService

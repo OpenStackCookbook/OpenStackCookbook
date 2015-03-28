@@ -25,7 +25,7 @@ ADMIN_IP=${ETH3_IP}
 #export LANG=C
 
 # MySQL
-export MYSQL_HOST=${ETH3_IP}
+export MYSQL_HOST=${ETH1_IP}
 export MYSQL_ROOT_PASS=openstack
 export MYSQL_DB_PASS=openstack
 
@@ -34,7 +34,7 @@ echo "mysql-server-5.5 mysql-server/root_password_again password $MYSQL_ROOT_PAS
 echo "mysql-server-5.5 mysql-server/root_password seen true" | sudo debconf-set-selections
 echo "mysql-server-5.5 mysql-server/root_password_again seen true" | sudo debconf-set-selections
 
-sudo apt-get -y install mysql-server python-mysqldb
+sudo apt-get -y install mariadb-server python-mysqldb
 
 sudo sed -i "s/^bind\-address.*/bind-address = 0.0.0.0/g" /etc/mysql/my.cnf
 sudo sed -i "s/^#max_connections.*/max_connections = 512/g" /etc/mysql/my.cnf
@@ -50,7 +50,7 @@ collation-server = utf8_general_ci
 init-connect='SET NAMES utf8'
 character-set-server = utf8" > /etc/mysql/conf.d/01-utf8.cnf
 
-sudo restart mysql
+sudo service mysql restart
 
 # Ensure root can do its job
 mysql -u root -p${MYSQL_ROOT_PASS} -h localhost -e "GRANT ALL ON *.* to root@\"localhost\" IDENTIFIED BY \"${MYSQL_ROOT_PASS}\" WITH GRANT OPTION;"

@@ -44,7 +44,7 @@ sudo c_rehash /etc/ssl/certs/ca.pem
 
 nova_compute_install() {
 	# Install some packages:
-	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth sasl2-bin
+	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy sasl2-bin
 	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	# [DVR] # sudo apt-get -y install neutron-l3-agent
 	sudo apt-get -y install vlan bridge-utils

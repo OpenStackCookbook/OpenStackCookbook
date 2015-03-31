@@ -555,7 +555,7 @@ NEUTRON_CONF=/etc/neutron/neutron.conf
 NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 
 # Configure Neutron
-cat > ${NEUTRON_CONF} << EOF
+cat > ${NEUTRON_CONF}<<EOF
 [DEFAULT]
 verbose = True
 debug = True
@@ -644,7 +644,7 @@ service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.hapr
 EOF
 
 
-cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
+cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} <<EOF
 [ml2]
 type_drivers = vxlan,gre
 tenant_network_types = vxlan
@@ -783,7 +783,6 @@ security_group_api=neutron
 firewall_driver=nova.virt.firewall.NoopFirewallDriver
 neutron_ca_certificates_file=/etc/ssl/certs/ca.pem
 
-
 service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
 
@@ -797,7 +796,7 @@ volume_driver=nova.volume.driver.ISCSIDriver
 enabled_apis=ec2,osapi_compute,metadata
 volume_api_class=nova.volume.cinder.API
 iscsi_helper=tgtadm
-iscsi_ip_address=${CONTROLLER_HOST}
+iscsi_ip_address=${CINDER_ENDPOINT}
 
 # Images
 image_service=nova.image.glance.GlanceImageService

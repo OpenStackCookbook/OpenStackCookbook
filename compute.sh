@@ -19,6 +19,13 @@ ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
 
+
+
+
+#######################
+# Chapter 4 - Compute #
+#######################
+
 # Must define your environment
 MYSQL_HOST=${CONTROLLER_HOST}
 GLANCE_HOST=${CONTROLLER_HOST}
@@ -38,7 +45,7 @@ sudo c_rehash /etc/ssl/certs/ca.pem
 
 nova_compute_install() {
 	# Install some packages:
-	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy nova-consoleauth sasl2-bin
+	sudo apt-get -y install ntp nova-api-metadata nova-compute nova-compute-qemu nova-doc novnc nova-novncproxy sasl2-bin
 	sudo apt-get -y install neutron-common neutron-plugin-ml2 neutron-plugin-openvswitch-agent
 	# [DVR] # sudo apt-get -y install neutron-l3-agent
 	sudo apt-get -y install vlan bridge-utils
@@ -48,7 +55,7 @@ nova_compute_install() {
 
 nova_configure() {
 
-# Networking 
+# Networking
 # ip forwarding
 echo "net.ipv4.ip_forward=1
 net.ipv4.conf.all.rp_filter=0
@@ -81,7 +88,7 @@ sudo service libvirt-bin restart
 
 # OpenVSwitch
 sudo apt-get install -y linux-headers-`uname -r` build-essential
-sudo apt-get install -y openvswitch-switch 
+sudo apt-get install -y openvswitch-switch
 
 # OpenVSwitch Configuration
 #br-int will be used for VM integration
@@ -180,6 +187,10 @@ connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 #service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 
 EOF
+
+#
+# Chapter 3 - Networking DVR
+#
 
 #cat > ${NEUTRON_L3_AGENT_INI} << EOF
 #[DEFAULT]
@@ -368,6 +379,11 @@ sudo chown nova:nova $NOVA_CONF
 
 }
 
+
+##############################
+# Chapter 9 - More OpenStack #
+##############################
+
 nova_ceilometer() {
 	/vagrant/ceilometer-compute.sh
 }
@@ -406,3 +422,6 @@ sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

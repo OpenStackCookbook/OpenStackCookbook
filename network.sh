@@ -23,6 +23,11 @@ MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 
+
+##########################
+# Chapter 3 - Networking #
+##########################
+
 echo "net.ipv4.ip_forward=1
 net.ipv4.conf.all.rp_filter=0
 net.ipv4.conf.default.rp_filter=0" | tee -a /etc/sysctl.conf
@@ -34,15 +39,14 @@ sudo apt-get -y install linux-headers-`uname -r`
 sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
 sudo c_rehash /etc/ssl/certs/ca.pem
 sudo apt-get -y install vlan bridge-utils dnsmasq-base dnsmasq-utils
-#sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent ipset python-mysqldb
-sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-dhcp-agent ipset python-mysqldb openswan neutron-vpn-agent
+sudo apt-get -y install neutron-plugin-ml2 neutron-plugin-openvswitch-agent openvswitch-switch neutron-l3-agent neutron-dhcp-agent ipset python-mysqldb neutron-lbaas-agent haproxy
 
 sudo /etc/init.d/openvswitch-switch start
 
 
 # OpenVSwitch Configuration
 #br-int will be used for VM integration
-sudo ovs-vsctl add-br br-int
+#sudo ovs-vsctl add-br br-int
 
 # Neutron Tenant Tunnel Network
 sudo ovs-vsctl add-br br-eth2
@@ -76,6 +80,7 @@ NEUTRON_DNSMASQ_CONF=/etc/neutron/dnsmasq-neutron.conf
 NEUTRON_METADATA_AGENT_INI=/etc/neutron/metadata_agent.ini
 NEUTRON_FWAAS_DRIVER_INI=/etc/neutron/fwaas_driver.ini
 NEUTRON_VPNAAS_AGENT_INI=/etc/neutron/vpn_agent.ini
+NEUTRON_LBAAS_AGENT_INI=/etc/neutron/lbaas_agent.ini
 
 SERVICE_TENANT=service
 NEUTRON_SERVICE_USER=neutron
@@ -99,7 +104,7 @@ bind_port = 9696
 core_plugin = ml2
 # service_plugins: router firewall lbaas vpn
 #service_plugins = router,firewall
-service_plugins = router, neutron.services.vpn.plugin.VPNDriverPlugin
+service_plugins = router, lbaas
 allow_overlapping_ips = True
 #router_distributed = True
 
@@ -137,8 +142,8 @@ insecure = True
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
 
 [service_providers]
-#service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
-service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
+service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default
+#service_provider=VPN:openswan:neutron.services.vpn.service_drivers.ipsec.IPsecVPNDriver:default
 #service_provider=FIREWALL:Iptables:neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver:default
 
 EOF
@@ -232,6 +237,17 @@ vpn_device_driver=neutron.services.vpn.device_drivers.ipsec.OpenSwanDriver
 ipsec_status_check_interval=60
 EOF
 
+cat > ${NEUTRON_LBAAS_AGENT_INI} <<EOF
+[DEFAULT]
+debug = False
+interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver
+device_driver = neutron.services.loadbalancer.drivers.haproxy.namespace_driver.HaproxyNSDriver
+
+[haproxy]
+loadbalancer_state_path = \$state_path/lbaas
+user_group = nogroup
+EOF
+
 echo "
 Defaults !requiretty
 neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
@@ -240,11 +256,13 @@ neutron ALL=(ALL:ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 # Restart Neutron Services
 sudo service neutron-plugin-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
-#sudo service neutron-l3-agent stop # DVR SO DONT RUN
-#sudo service neutron-l3-agent start # NON-DVR
+sudo service neutron-l3-agent stop # DVR SO DONT RUN
+sudo service neutron-l3-agent start # NON-DVR
+sudo start neutron-lbaas-agent stop
+sudo start neutron-lbaas-agent start
 sudo service neutron-metadata-agent restart
-sudo service neutron-vpn-agent stop
-sudo service neutron-vpn-agent start
+#sudo service neutron-vpn-agent stop
+#sudo service neutron-vpn-agent start
 
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 
@@ -253,3 +271,6 @@ sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

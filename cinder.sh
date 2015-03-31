@@ -18,6 +18,15 @@ CINDER_SERVICE_USER=cinder
 CINDER_SERVICE_PASS=cinder
 MYSQL_CINDER_PASS=openstack
 
+
+
+
+
+######################
+# Chapter 8 - Cinder #
+######################
+
+
 # Install some deps
 sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb xfsprogs
 
@@ -80,6 +89,8 @@ glance_api_insecure=True
 scheduler_topic=cinder-scheduler
 volume-topic=cinder-volume
 backup-topic=cinder-backup
+
+scheduler_manager=cinder.scheduler.manager.SchedulerManager
 
 [database]
 backend=sqlalchemy
@@ -144,6 +155,8 @@ scheduler_topic=cinder-scheduler
 volume-topic=cinder-volume
 backup-topic=cinder-backup
 
+scheduler_manager=cinder.scheduler.manager.SchedulerManager
+
 [database]
 backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
@@ -177,3 +190,6 @@ sudo stop rsyslog
 sudo cp /vagrant/rsyslog.conf /etc/rsyslog.conf
 sudo echo "*.*         @@controller:5140" >> /etc/rsyslog.d/50-default.conf
 sudo service rsyslog restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

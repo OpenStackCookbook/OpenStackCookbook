@@ -10,6 +10,12 @@ sudo apt-get install -y linux-headers-`uname -r` build-essential python-mysqldb 
 MY_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 KEYSTONE_ENDPOINT=${ETH3_IP}
 
+##############################################
+# Chapter 6 - Using OpenStack Object Storage #
+##############################################
+
+
+
 swift_install() {
 	# Install some packages:
 	sudo apt-get -y install swift swift-proxy swift-account swift-container swift-object memcached xfsprogs curl python-webob python-keystoneclient python-swiftclient
@@ -22,7 +28,7 @@ swift_install() {
 	# Create cache directory & set owner to swift
 	mkdir -p /var/cache/swift
 	chown -R swift:swift /var/cache/swift
-	
+
 }
 
 swift_configure(){
@@ -40,7 +46,7 @@ sudo mount -a
 #sudo mkdir node{1..4}
 #sudo chown swift.swift /mnt/swift_backend/*
 #for i in {1..4}; do sudo ln -s /mnt/swift_backend/node$i /srv/node$i; done;
-#sudo mkdir -p /etc/swift/i{account-server,container-server,object-server} 
+#sudo mkdir -p /etc/swift/i{account-server,container-server,object-server}
 #/srv/node1/device /srv/node2/device /srv/node3/device /srv/node4/device
 #sudo mkdir /run/swift
 
@@ -391,3 +397,6 @@ swift_restart(){
 swift_install
 swift_configure
 swift_restart
+
+# Copy openrc file to local instance vagrant root folder in case of loss of file share
+sudo cp /vagrant/openrc /home/vagrant 

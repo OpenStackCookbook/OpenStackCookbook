@@ -1,0 +1,7 @@
+parameters:
+  key_name: demokey
+  image: ubuntu-trusty
+  flavor: m1.tiny
+  public_net_id: 44b35e7b-9913-4df7-ac59-b39bb3b10fa6
+  private_net_id: 6ff82bf2-03e2-4a25-a035-de50e4cc9a89
+  private_subnet_id: ffe0972a-5177-404a-8911-827b8dfd588d

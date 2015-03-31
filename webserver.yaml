@@ -1,0 +1,15 @@
+#cloud-config
+hostname: myWebserver
+fqdn: mywebserver.cook.book
+manage_etc_hosts: true
+groups:
+ - developers
+users:
+ - auser
+   gecos: A User
+   primary-group: users
+   groups: users, developers
+   passwd: $6r$j632wezy/grasdfds7/efew7fwq/fdfws.8ewfwefwe
+packages
+ - apache2
+

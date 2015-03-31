@@ -120,6 +120,7 @@ else
 rootwrap_config=/etc/cinder/rootwrap.conf
 api_paste_config = /etc/cinder/api-paste.ini
 iscsi_helper=tgtadm
+iscsi_ip_address=172.16.0.211
 volume_name_template = volume-%s
 volume_group = cinder-volumes
 verbose = True

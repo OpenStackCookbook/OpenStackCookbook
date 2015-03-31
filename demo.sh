@@ -60,7 +60,7 @@ UBUNTU=$(nova image-list \
   | awk '/\ trusty/ {print $2}')
 
 NET_ID=$(neutron net-list | awk '/cookbook_network_1/ {print $2}')
-nova boot --flavor m1.medium --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true test1
+nova boot --flavor m1.medium --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,size=15,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true test1
 #nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
 
 neutron net-create --tenant-id ${TENANT_ID} ext_net --router:external=True

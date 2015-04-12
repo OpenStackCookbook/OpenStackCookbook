@@ -83,14 +83,14 @@ insecure = True
 metering_secret = foobar
 EOF
 
-keystone --insecure user-create --name=ceilometer --pass=ceilometer --email=heat@localhost
-keystone --insecure user-role-add --user=ceilometer --tenant=service --role=admin
+keystone user-create --name=ceilometer --pass=ceilometer --email=heat@localhost
+keystone user-role-add --user=ceilometer --tenant=service --role=admin
 
-keystone --insecure service-create --name=ceilometer --type=metering --description="Ceilometer Metering Service"
+keystone service-create --name=ceilometer --type=metering --description="Ceilometer Metering Service"
 
 METERING_SERVICE_ID=$(keystone service-list | awk '/\ metering\ / {print $2}')
 
-keystone --insecure endpoint-create \
+keystone endpoint-create \
   --region regionOne \
   --service-id=${METERING_SERVICE_ID} \
   --publicurl=http://${CONTROLLER_HOST}:8777 \

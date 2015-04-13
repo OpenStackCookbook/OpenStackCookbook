@@ -78,12 +78,10 @@ os_username = ceilometer
 os_tenant_name = service
 os_password = ceilometer
 insecure = True
- 
-[publisher_rpc]
-metering_secret = foobar
+
 EOF
 
-keystone user-create --name=ceilometer --pass=ceilometer --email=heat@localhost
+keystone user-create --name=ceilometer --pass=ceilometer --email=ceilometer@localhost
 keystone user-role-add --user=ceilometer --tenant=service --role=admin
 
 keystone service-create --name=ceilometer --type=metering --description="Ceilometer Metering Service"

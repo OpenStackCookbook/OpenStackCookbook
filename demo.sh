@@ -27,7 +27,7 @@ neutron subnet-create \
     --tenant-id ${TENANT_ID} \
     --name cookbook_subnet_1 \
     cookbook_network_1 \
-    11.200.0.0/24
+    10.200.0.0/24
 
 neutron router-create \
     --tenant-id ${TENANT_ID} \
@@ -78,6 +78,6 @@ neutron router-gateway-set \
     ${EXT_NET_ID}
 
 neutron floatingip-create --tenant-id ${TENANT_ID} ext_net
-VM_PORT=$(neutron port-list | awk '/11.200.0.2/ {print $2}')
+VM_PORT=$(neutron port-list | awk '/10.200.0.2/ {print $2}')
 FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
 neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}

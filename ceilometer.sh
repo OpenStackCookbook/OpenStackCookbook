@@ -17,7 +17,7 @@
 
 
 # Install Ceilometer Things
-sudo apt-get -y install ceilometer-api ceilometer-collector ceilometer-agent-central python-ceilometerclient mongodb
+sudo apt-get -y install ceilometer-api ceilometer-collector ceilometer-agent-central python-ceilometerclient mongodb python-pymongo
 
 sudo service mongodb restart
 

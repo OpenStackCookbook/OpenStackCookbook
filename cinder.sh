@@ -18,10 +18,6 @@ CINDER_SERVICE_USER=cinder
 CINDER_SERVICE_PASS=cinder
 MYSQL_CINDER_PASS=openstack
 
-
-
-
-
 ######################
 # Chapter 8 - Cinder #
 ######################
@@ -40,11 +36,7 @@ sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
 sudo c_rehash /etc/ssl/certs/ca.pem
 
 # Configure Cinder
-# /etc/cinder/api-paste.ini
-sudo sed -i 's/127.0.0.1/'${CONTROLLER_HOST}'/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_TENANT_NAME%/service/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_USER%/cinder/g' /etc/cinder/api-paste.ini
-sudo sed -i 's/%SERVICE_PASSWORD%/cinder/g' /etc/cinder/api-paste.ini
+
 
 ## Check /vagrant/cinder.ini for "nfs" if so, do nfs things.
 if grep -q nfs "/vagrant/cinder.ini"; then
@@ -65,7 +57,6 @@ if grep -q nfs "/vagrant/cinder.ini"; then
 	cat > ${CINDER_CONF} <<EOF
 [DEFAULT]
 rootwrap_config=/etc/cinder/rootwrap.conf
-api_paste_config = /etc/cinder/api-paste.ini
 volume_driver = cinder.volume.drivers.nfs.NfsDriver
 nfs_shares_config = /etc/cinder/nfsshares
 
@@ -104,7 +95,6 @@ admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
 #signing_dir = \$state_path/keystone-signing
 insecure = True
-
 EOF
 
 else
@@ -128,7 +118,7 @@ else
 	cat > ${CINDER_CONF} <<EOF
 [DEFAULT]
 rootwrap_config=/etc/cinder/rootwrap.conf
-api_paste_config = /etc/cinder/api-paste.ini
+#api_paste_config = /etc/cinder/api-paste.ini
 iscsi_helper=tgtadm
 iscsi_ip_address=172.16.0.211
 volume_name_template = volume-%s

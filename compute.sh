@@ -169,14 +169,14 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
+#signing_dir = \$state_path/keystone-signing
 insecure = True
+
 
 [database]
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
@@ -365,12 +365,13 @@ vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/
+#signing_dir = \$state_path/keystone-signing
 insecure = True
-
 
 EOF
 

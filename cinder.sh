@@ -97,13 +97,12 @@ backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
-auth_uri = https://${KEYSTONE_ENDPOINT}:5000/
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 EOF
@@ -162,13 +161,12 @@ backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
-auth_uri = https://${KEYSTONE_ENDPOINT}:5000/
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 EOF

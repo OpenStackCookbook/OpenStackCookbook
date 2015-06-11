@@ -8,7 +8,8 @@
 . /vagrant/common.sh
 
 
-
+CEILOMETER_SERVICE_USER=ceilometer
+CEILOMETER_SERVICE_PASS=ceilometer
 
 
 ##############################
@@ -65,11 +66,12 @@ host = 172.16.0.200
 port = 8777
  
 [keystone_authtoken]
-identity_uri = https://192.168.100.200:35357
-admin_tenant_name = service
-admin_user = ceilometer
-admin_password = ceilometer
-revocation_cache_time = 10
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${CEILOMETER_SERVICE_USER}
+admin_password = ${CEILOMETER_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [service_credentials]

@@ -129,13 +129,12 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [database]

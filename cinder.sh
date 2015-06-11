@@ -93,7 +93,7 @@ identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 EOF
 
@@ -156,7 +156,7 @@ identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 EOF

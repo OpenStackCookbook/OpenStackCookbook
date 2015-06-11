@@ -204,7 +204,7 @@ admin_tenant_name = service
 admin_user = swift
 admin_password = swift
 delay_auth_decision = 0
-signing_dir = /var/swift-signing
+#signing_dir = /var/swift-signing
 insecure = True
 
 [filter:keystone]

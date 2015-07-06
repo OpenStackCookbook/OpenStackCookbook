@@ -410,11 +410,12 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-identity_uri = https://${ETH3_IP}:35357
-admin_tenant_name = service
-admin_user = glance
-admin_password = glance
-revocation_cache_time = 10
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${GLANCE_SERVICE_USER}
+admin_password = ${GLANCE_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [glance_store]
@@ -466,10 +467,12 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-identity_uri = https://${ETH3_IP}:35357
-admin_tenant_name = service
-admin_user = glance
-admin_password = glance
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${GLANCE_SERVICE_USER}
+admin_password = ${GLANCE_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 use_syslog = True
@@ -623,14 +626,12 @@ nova_ca_certificates_file = /etc/ssl/certs/ca.pem
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
-#auth_uri = http://${ETH3_IP}:35357/
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [database]
@@ -823,12 +824,12 @@ vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 EOF

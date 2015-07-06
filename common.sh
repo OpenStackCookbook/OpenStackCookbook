@@ -14,6 +14,9 @@
 # Sets up common bits used in each build script.
 #
 
+# Useful if you have a cache on your network. Adjust to suit.
+# echo "Acquire::http { Proxy \"http://192.168.1.20:3142\"; };" > /etc/apt/apt.conf.d/01squid
+
 export DEBIAN_FRONTEND=noninteractive
 
 ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')

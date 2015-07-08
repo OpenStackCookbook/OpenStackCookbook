@@ -1,0 +1,132 @@
+---
+cidr_networks:
+  management: 172.16.0.0/16
+  tunnel: 172.29.240.0/22
+  storage: 172.29.244.0/22
+
+used_ips:
+  - 172.16.0.198,172.16.0.203
+  - 172.29.240.198,172.29.240.203
+
+global_overrides:
+  internal_lb_vip_address: 172.16.0.201
+  external_lb_vip_address: 192.168.100.201
+  lb_name: haproxy
+  tunnel_bridge: "br-vxlan"
+  management_bridge: "br-mgmt"
+  provider_networks:
+    - network:
+        group_binds:
+          - all_containers
+          - hosts
+        type: "raw"
+        container_bridge: "br-mgmt"
+        container_interface: "eth1"
+        container_type: "veth"
+        ip_from_q: "management"
+        is_container_address: true
+        is_ssh_address: true
+    - network:
+        group_binds:
+          - neutron_linuxbridge_agent
+        container_bridge: "br-vxlan"
+        container_type: "veth"
+        container_interface: "eth10"
+        ip_from_q: "tunnel"
+        type: "vxlan"
+        range: "1:1000"
+        net_name: "vxlan"
+    - network:
+        group_binds:
+          - neutron_linuxbridge_agent
+        container_bridge: "br-vlan"
+        container_type: "veth"
+        container_interface: "eth11"
+        type: "vlan"
+        range: "1:1"
+        net_name: "vlan"
+    - network:
+        group_binds:
+          - neutron_linuxbridge_agent
+        container_bridge: "br-vlan"
+        container_type: "veth"
+        container_interface: "eth12"
+        host_bind_override: "eth12"
+        type: "flat"
+        net_name: "flat"
+
+
+# Shared infrastructure parts
+shared-infra_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+# OpenStack Compute infrastructure parts
+os-infra_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+# OpenStack Storage infrastructure parts
+storage-infra_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+# Keystone Identity infrastructure parts
+identity_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+# User defined Compute Hosts, this should be a required group
+compute_hosts:
+  compute-01:
+    ip: 172.16.0.202
+#  compute-02:
+#    ip: 172.16.0.203
+
+storage_hosts:
+  cinder:
+    ip: 172.16.0.201
+    container_vars:
+      cinder_backends:
+        limit_container_types: cinder_volume
+        lvm:
+          volume_group: cinder-volumes
+          volume_driver: cinder.volume.drivers.lvm.LVMISCSIDriver
+          volume_backend_name: LVM_iSCSI
+
+network_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+# User defined Repository Hosts, this is an optional group
+repo-infra_hosts:
+  controller-01:
+    ip: 172.16.0.198
+  controller-02:
+    ip: 172.16.0.199
+  controller-03:
+    ip: 172.16.0.200
+
+haproxy_hosts:
+  haproxy:
+    ip: 172.16.0.201

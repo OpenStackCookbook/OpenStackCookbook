@@ -18,6 +18,7 @@
 # echo "Acquire::http { Proxy \"http://192.168.1.20:3142\"; };" > /etc/apt/apt.conf.d/01squid
 
 export DEBIAN_FRONTEND=noninteractive
+echo "set grub-pc/install_devices /dev/sda" | debconf-communicate
 
 ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')

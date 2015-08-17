@@ -75,7 +75,7 @@ connection = mysql://heat:${MYSQL_HEAT_PASS}@${CONTROLLER_HOST}/heat
 [keystone_authtoken]
 auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
 identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
-admin_tenant_name = ${SERVICE_TENANT}
+admin_tenant_name = service
 admin_user = ${HEAT_SERVICE_USER}
 admin_password = ${HEAT_SERVICE_PASS}
 #signing_dir = \$state_path/keystone-signing

@@ -71,7 +71,7 @@ ROUTER_ID=$(neutron router-list \
   | awk '/\ cookbook_router_1\ / {print $2}')
 
 EXT_NET_ID=$(neutron net-list \
-  | awk '/\ ext_net\ / {print $2}')
+  | awk '/\ floatingNet\ / {print $2}')
 
 neutron router-gateway-set \
     ${ROUTER_ID} \

@@ -1,0 +1,14 @@
+listen stats 0.0.0.0:9000       #Listen on all IP's on port 9000
+    mode http
+    #This is the virtual URL to access the stats page
+    stats uri /stats        
+
+    #Authentication realm. This can be set to anything. Escape space characters with a backslash.
+    stats realm HAProxy\ Statistics 
+
+    #The user/pass you want to use. Change this password!
+    stats auth admin:openstack
+
+    #This allows you to take down and bring up back end servers.
+    #This will produce an error on older versions of HAProxy.
+    stats admin if TRUE

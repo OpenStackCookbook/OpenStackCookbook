@@ -17,6 +17,7 @@
 ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+CINDER_ENDPOINT=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}' | sed 's/\.[0-9]*$/.211/')
 
 
 
@@ -168,14 +169,14 @@ notification_driver = neutron.openstack.common.notifier.rpc_notifier
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
+#signing_dir = \$state_path/keystone-signing
 insecure = True
+
 
 [database]
 connection = mysql://neutron:${MYSQL_NEUTRON_PASS}@${CONTROLLER_HOST}/neutron
@@ -336,7 +337,7 @@ volume_driver=nova.volume.driver.ISCSIDriver
 enabled_apis=ec2,osapi_compute,metadata
 volume_api_class=nova.volume.cinder.API
 iscsi_helper=tgtadm
-iscsi_ip_address=${CONTROLLER_HOST}
+iscsi_ip_address=${CINDER_ENDPOINT}
 
 # Images
 image_service=nova.image.glance.GlanceImageService
@@ -364,12 +365,13 @@ vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/
+#signing_dir = \$state_path/keystone-signing
 insecure = True
-
 
 EOF
 

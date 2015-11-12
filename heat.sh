@@ -6,7 +6,8 @@
 # Source in common env vars
 . /vagrant/common.sh
 
-
+HEAT_SERVICE_USER=heat
+HEAT_SERVICE_PASS=heat
 
 
 ##############################
@@ -72,12 +73,12 @@ backend=sqlalchemy
 connection = mysql://heat:${MYSQL_HEAT_PASS}@${CONTROLLER_HOST}/heat
 
 [keystone_authtoken]
-signing_dir = /var/cache/heat
-auth_uri = http://${CONTROLLER_EXTERNAL_HOST}:5000/v2.0
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = service
-admin_user = heat
-admin_password = heat
-identity_uri = https://${CONTROLLER_EXTERNAL_HOST}:35357/
+admin_user = ${HEAT_SERVICE_USER}
+admin_password = ${HEAT_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [ec2authtoken]

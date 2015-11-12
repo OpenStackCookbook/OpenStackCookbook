@@ -410,11 +410,12 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-identity_uri = https://${ETH3_IP}:35357
-admin_tenant_name = service
-admin_user = glance
-admin_password = glance
-revocation_cache_time = 10
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${GLANCE_SERVICE_USER}
+admin_password = ${GLANCE_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [glance_store]
@@ -466,10 +467,12 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-identity_uri = https://${ETH3_IP}:35357
-admin_tenant_name = service
-admin_user = glance
-admin_password = glance
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+admin_tenant_name = ${SERVICE_TENANT}
+admin_user = ${GLANCE_SERVICE_USER}
+admin_password = ${GLANCE_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 use_syslog = True
@@ -555,7 +558,7 @@ NEUTRON_CONF=/etc/neutron/neutron.conf
 NEUTRON_PLUGIN_ML2_CONF_INI=/etc/neutron/plugins/ml2/ml2_conf.ini
 
 # Configure Neutron
-cat > ${NEUTRON_CONF} << EOF
+cat > ${NEUTRON_CONF}<<EOF
 [DEFAULT]
 verbose = True
 debug = True
@@ -623,14 +626,12 @@ nova_ca_certificates_file = /etc/ssl/certs/ca.pem
 root_helper = sudo
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
-signing_dir = \$state_path/keystone-signing
-#auth_uri = http://${ETH3_IP}:35357/
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 [database]
@@ -644,7 +645,7 @@ service_provider=LOADBALANCER:Haproxy:neutron.services.loadbalancer.drivers.hapr
 EOF
 
 
-cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
+cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} <<EOF
 [ml2]
 type_drivers = vxlan,gre
 tenant_network_types = vxlan
@@ -783,7 +784,6 @@ security_group_api=neutron
 firewall_driver=nova.virt.firewall.NoopFirewallDriver
 neutron_ca_certificates_file=/etc/ssl/certs/ca.pem
 
-
 service_neutron_metadata_proxy=true
 neutron_metadata_proxy_shared_secret=foo
 
@@ -797,7 +797,7 @@ volume_driver=nova.volume.driver.ISCSIDriver
 enabled_apis=ec2,osapi_compute,metadata
 volume_api_class=nova.volume.cinder.API
 iscsi_helper=tgtadm
-iscsi_ip_address=${CONTROLLER_HOST}
+iscsi_ip_address=${CINDER_ENDPOINT}
 
 # Images
 image_service=nova.image.glance.GlanceImageService
@@ -824,12 +824,12 @@ vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
-auth_host = ${KEYSTONE_ADMIN_ENDPOINT}
-auth_port = 35357
-auth_protocol = https
+auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
+#signing_dir = \$state_path/keystone-signing
 insecure = True
 
 EOF

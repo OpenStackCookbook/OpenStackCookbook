@@ -1,0 +1,6 @@
+export OS_TENANT_NAME=cookbook
+export OS_USERNAME=admin
+export OS_PASSWORD=openstack
+export OS_AUTH_URL=https://192.168.100.200:5000/v2.0/
+export OS_KEY=/vagrant/cakey.pem
+export OS_CACERT=/vagrant/ca.pem

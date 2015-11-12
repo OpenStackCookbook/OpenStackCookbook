@@ -27,7 +27,7 @@ neutron subnet-create \
     --tenant-id ${TENANT_ID} \
     --name cookbook_subnet_1 \
     cookbook_network_1 \
-    11.200.0.0/24
+    10.200.0.0/24
 
 neutron router-create \
     --tenant-id ${TENANT_ID} \
@@ -59,35 +59,25 @@ cp demokey /vagrant
 UBUNTU=$(nova image-list \
   | awk '/\ trusty/ {print $2}')
 
-
 NET_ID=$(neutron net-list | awk '/cookbook_network_1/ {print $2}')
+nova boot --flavor m1.tiny --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,size=15,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true test1
+#nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
 
-nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
+neutron net-create --tenant-id ${TENANT_ID} floatingNet --router:external=True
 
-neutron net-create --tenant-id ${TENANT_ID} ext_net --router:external=True
-
-neutron subnet-create --tenant-id ${TENANT_ID} --name cookbook_float_subnet_1 --allocation-pool start=192.168.100.10,end=192.168.100.20 --gateway 192.168.100.1 ext_net 192.168.100.0/24 --enable_dhcp=False
+neutron subnet-create --tenant-id ${TENANT_ID} --name cookbook_float_subnet_1 --allocation-pool start=192.168.100.10,end=192.168.100.20 --gateway 192.168.100.1 floatingNet 192.168.100.0/24 --enable_dhcp=False
 
 ROUTER_ID=$(neutron router-list \
   | awk '/\ cookbook_router_1\ / {print $2}')
 
 EXT_NET_ID=$(neutron net-list \
-  | awk '/\ ext_net\ / {print $2}')
+  | awk '/\ floatingNet\ / {print $2}')
 
 neutron router-gateway-set \
     ${ROUTER_ID} \
     ${EXT_NET_ID}
 
-neutron floatingip-create --tenant-id ${TENANT_ID} ext_net
-VM_PORT=$(neutron port-list | awk '/11.200.0.2/ {print $2}')
+neutron floatingip-create --tenant-id ${TENANT_ID} floatingNet
+VM_PORT=$(neutron port-list | awk '/10.200.0.2/ {print $2}')
 FLOAT_ID=$(neutron floatingip-list | awk '/192.168.100.11/ {print $2}')
 neutron floatingip-associate ${FLOAT_ID} ${VM_PORT}
-
-cinder create --display-name demo 1
-
-INSTANCE_ID=$(nova list | awk '/\ test1\ / {print $2}')
-VOLUME_ID=$(nova volume-list | awk '/\ demo\ / {print $2}')
-
-echo "[+] Sleeping 60 seconds for instance to become available"
-sleep 60
-nova volume-attach $INSTANCE_ID $VOLUME_ID /dev/vdc

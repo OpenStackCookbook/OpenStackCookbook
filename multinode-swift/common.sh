@@ -14,15 +14,16 @@
 # Sets up common bits used in each build script.
 #
 
-# Useful if you have a cache on your network. Adjust to suit.
-# echo "Acquire::http { Proxy \"http://192.168.1.20:3142\"; };" > /etc/apt/apt.conf.d/01squid
-
 export DEBIAN_FRONTEND=noninteractive
-echo "set grub-pc/install_devices /dev/sda" | debconf-communicate
 
 ETH1_IP=$(ifconfig eth1 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH2_IP=$(ifconfig eth2 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
 ETH3_IP=$(ifconfig eth3 | awk '/inet addr/ {split ($2,A,":"); print A[2]}')
+
+
+# Talk to a proxy server
+# echo 'Acquire::http { Proxy "http://192.168.1.20:3142"; };' | sudo tee /etc/apt/apt.conf.d/01apt-cacher-ng-proxy
+
 
 #export CONTROLLER_HOST=172.16.0.200
 #Dynamically determine first three octets if user specifies alternative IP ranges.  Fourth octet still hardcoded
@@ -52,12 +53,12 @@ then
 	echo "
 # CookbookHosts
 192.168.100.200	controller.book controller
-192.168.100.201	network.book network
-192.168.100.202	compute-01.book compute-01
-192.168.100.203	compute-02.book compute-02
-192.168.100.210	swift.book swift
-192.168.100.212	swift2.book swift2
-192.168.100.211	cinder.book cinder" | sudo tee -a /etc/hosts
+192.168.100.209	swift-proxy.book swift-proxy
+192.168.100.221 swift-01.book swift-01
+192.168.100.222 swift-02.book swift-02
+192.168.100.223 swift-03.book swift-03
+192.168.100.224 swift-04.book swift-04
+192.168.100.225 swift-05.book swift-05" | sudo tee -a /etc/hosts
 fi
 
 # Aliases for insecure SSL

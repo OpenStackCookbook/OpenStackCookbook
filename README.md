@@ -2,7 +2,7 @@
 #### Supporting vagrant scripts
 ## Buy The Book
 More information http://www.openstackcookbook.com/<br>
-Purchase: http://www.packtpub.com/openstack-cloud-computing-cookbook-second-edition/book<br>
+Purchase: https://www.packtpub.com/virtualization-and-cloud/openstack-cloud-computing-cookbook-third-edition
 And at your favourite online store!
 
 ## Authors 

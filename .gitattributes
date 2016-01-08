@@ -1,0 +1,3 @@
+# Windows hosts are pain. Git for Windows will convert line endings breaking shell scripts
+# Ensure this doesn't happen
+*.sh eol=lf

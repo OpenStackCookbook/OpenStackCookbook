@@ -6,11 +6,12 @@
 # configure swift and swift2 with container_sync configs (execute extra script at end)
 
 # If dvr
-# enable compute2
-# configure compute and compute2 for dvr
+# add second compute:   'compute' => [2,202]
+# configure compute-01 and compute-01 for dvr
 
 # Uncomment the next line to force use of VirtualBox provider when Fusion provider is present
 # ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+# Or specify --provide=virtualbox on command line
 
 nodes = {
     'controller'  => [1, 200],
@@ -23,9 +24,20 @@ nodes = {
 
 Vagrant.configure("2") do |config|
     
-  # Virtualbox
+  # Defaults
   config.vm.box = "bunchc/trusty-x64"
   config.vm.synced_folder ".", "/vagrant", type: "nfs"
+
+  # VirtualBox
+  config.vm.provider :virtualbox do |vbox, override|
+    override.vm.box = "bunchc/trusty-x64"
+    if Vagrant::Util::Platform.windows? 
+      override.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700","fmode=700"]
+    else
+      override.vm.synced_folder ".", "/vagrant", type: "nfs"
+    end
+  end
+
 
   # VMware Fusion / Workstation
   config.vm.provider :vmware_fusion or config.vm.provider :vmware_workstation do |vmware, override|

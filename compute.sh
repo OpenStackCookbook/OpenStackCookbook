@@ -213,7 +213,7 @@ tunnel_id_ranges = 1:1000
 [ml2_type_vxlan]
 vni_ranges = 1:1000
 
-[ml2_tyep_flat]
+[ml2_type_flat]
 flat_networks = eth3
 
 #[vxlan]

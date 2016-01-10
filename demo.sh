@@ -1,5 +1,23 @@
 #!/bin/sh
 
+# This scripts assumes *a lot*
+# Run it once, as soon as you've booted the vagrant environment:
+
+# vagrant up
+# vagrant ssh controller
+# /vagrant/demo.sh
+
+# Yes, that's it!
+
+# Crude lock to prevent multiple runs
+if [[ -f ~/.demo.lock ]]
+then
+	echo "~/.demo.lock in place. Already ran. Exiting."
+	exit 1
+else
+	touch ~/.demo.lock
+fi
+
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
 export OS_PASSWORD=openstack
@@ -60,12 +78,22 @@ UBUNTU=$(nova image-list \
   | awk '/\ trusty/ {print $2}')
 
 NET_ID=$(neutron net-list | awk '/cookbook_network_1/ {print $2}')
-nova boot --flavor m1.tiny --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,size=15,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true test1
-#nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} test1
 
-neutron net-create --tenant-id ${TENANT_ID} floatingNet --router:external=True
+# If Cinder is available, boot from vol
+if ping -c 1 cinder
+then
+	nova boot --flavor m1.tiny --block-device source=image,id=${UBUNTU},shutdown=preserve,dest=volume,size=15,bootindex=0 --key_name demokey --nic net-id=${NET_ID} --config-drive=true CookbookInstance1
+# Else ephemeral
+else
+	nova boot --flavor 1 --image ${UBUNTU} --key_name demokey --nic net-id=${NET_ID} CookbookInstance1
+fi
 
+# Create an external network of type Flat (which goes out of eth3)
+neutron net-create --tenant-id ${TENANT_ID} floatingNet --shared --provider:network_type flat --provider:physical_network eth3 --router:external=True
+
+# Subnet matches subnet of eth3: 192.168.100.0/24, but we assign a small portion for floating IPs
 neutron subnet-create --tenant-id ${TENANT_ID} --name cookbook_float_subnet_1 --allocation-pool start=192.168.100.10,end=192.168.100.20 --gateway 192.168.100.1 floatingNet 192.168.100.0/24 --enable_dhcp=False
+
 
 ROUTER_ID=$(neutron router-list \
   | awk '/\ cookbook_router_1\ / {print $2}')

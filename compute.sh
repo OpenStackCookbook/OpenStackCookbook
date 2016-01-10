@@ -203,7 +203,7 @@ EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} << EOF
 [ml2]
-type_drivers = gre,vxlan
+type_drivers = gre,vxlan,flat
 tenant_network_types = vxlan
 mechanism_drivers = openvswitch,l2population
 
@@ -212,6 +212,9 @@ tunnel_id_ranges = 1:1000
 
 [ml2_type_vxlan]
 vni_ranges = 1:1000
+
+[ml2_tyep_flat]
+flat_networks = eth3
 
 #[vxlan]
 #enable_vxlan = True
@@ -413,10 +416,10 @@ start neutron-l3-agent
 
 # Because live-migration
 # Do some terrible things for GID/UID mapping on compute nodes:
-UID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
-GID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
-sudo usermod -u $UID nova
-sudo groupmod -g $GID nova
+_UID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
+_GID=`ssh root@controller "id nova | awk {'print $1'} | cut -d '=' -f2 | cut -d '(' -f1"`
+sudo usermod -u $_UID nova
+sudo groupmod -g $_GID nova
 
 # Logging
 sudo stop rsyslog

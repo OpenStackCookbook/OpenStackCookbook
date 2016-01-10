@@ -194,6 +194,9 @@ tunnel_id_ranges = 1:1000
 #vxlan_group =
 vni_ranges = 1:1000
 
+[ml2_type_flat]
+flat_networks = eth3
+
 #[vxlan]
 #enable_vxlan = True
 #vxlan_group =

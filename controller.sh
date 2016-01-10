@@ -647,7 +647,7 @@ EOF
 
 cat > ${NEUTRON_PLUGIN_ML2_CONF_INI} <<EOF
 [ml2]
-type_drivers = vxlan,gre
+type_drivers = vxlan,gre,flat
 tenant_network_types = vxlan
 mechanism_drivers = openvswitch,l2population
 
@@ -657,6 +657,9 @@ tunnel_id_ranges = 1:1000
 [ml2_type_vxlan]
 vxlan_group =
 vni_ranges = 1:1000
+
+[ml2_type_flat]
+flat_networks = eth3
 
 [vxlan]
 enable_vxlan = True

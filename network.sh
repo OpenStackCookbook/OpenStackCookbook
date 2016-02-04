@@ -260,8 +260,8 @@ sudo service neutron-plugin-openvswitch-agent restart
 sudo service neutron-dhcp-agent restart
 sudo service neutron-l3-agent stop # DVR SO DONT RUN
 sudo service neutron-l3-agent start # NON-DVR
-sudo start neutron-lbaas-agent stop
-sudo start neutron-lbaas-agent start
+sudo stop neutron-lbaas-agent
+sudo start neutron-lbaas-agent
 sudo service neutron-metadata-agent restart
 #sudo service neutron-vpn-agent stop
 #sudo service neutron-vpn-agent start

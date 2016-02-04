@@ -412,7 +412,7 @@ sleep 90; echo "[+] Restarting nova-* on controller"
 ssh root@controller "cd /etc/init; ls nova-* neutron-server.conf | cut -d '.' -f1 | while read N; do stop \$N; start \$N; done"
 sleep 30; echo "[+] Restarting nova-* on compute"
 nova_restart
-start neutron-l3-agent
+# [DVR] # start neutron-l3-agent
 
 # Because live-migration
 # Do some terrible things for GID/UID mapping on compute nodes:

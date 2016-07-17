@@ -73,7 +73,7 @@ sudo apt-get -y install ntp keystone python-keyring
 
 # Config Files
 KEYSTONE_CONF=/etc/keystone/keystone.conf
-SSL_PATH=/etc/ssl/
+#SSL_PATH=/etc/ssl/
 
 MYSQL_ROOT_PASS=openstack
 MYSQL_KEYSTONE_PASS=openstack
@@ -101,21 +101,21 @@ echo "
 #valid_days=3650
 #cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=172.16.0.200
 
-[ssl]
-enable = True
-certfile = /etc/keystone/ssl/certs/keystone.pem
-keyfile = /etc/keystone/ssl/private/keystonekey.pem
-ca_certs = /etc/keystone/ssl/certs/ca.pem
-cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=192.168.100.200
-#cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=172.16.0.200
-ca_key = /etc/keystone/ssl/certs/cakey.pem" | sudo tee -a ${KEYSTONE_CONF}
+#[ssl]
+#enable = True
+#certfile = /etc/keystone/ssl/certs/keystone.pem
+#keyfile = /etc/keystone/ssl/private/keystonekey.pem
+#ca_certs = /etc/keystone/ssl/certs/ca.pem
+#cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=192.168.100.200
+##cert_subject=/C=US/ST=Unset/L=Unset/O=Unset/CN=172.16.0.200
+#ca_key = /etc/keystone/ssl/certs/cakey.pem" | sudo tee -a ${KEYSTONE_CONF}
 
-rm -rf /etc/keystone/ssl
-sudo keystone-manage ssl_setup --keystone-user keystone --keystone-group keystone
-sudo cp /etc/keystone/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
-sudo c_rehash /etc/ssl/certs/ca.pem
-sudo cp /etc/keystone/ssl/certs/ca.pem /vagrant/ca.pem
-sudo cp /etc/keystone/ssl/certs/cakey.pem /vagrant/cakey.pem
+#rm -rf /etc/keystone/ssl
+#sudo keystone-manage ssl_setup --keystone-user keystone --keystone-group keystone
+#sudo cp /etc/keystone/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+#sudo c_rehash /etc/ssl/certs/ca.pem
+#sudo cp /etc/keystone/ssl/certs/ca.pem /vagrant/ca.pem
+#sudo cp /etc/keystone/ssl/certs/cakey.pem /vagrant/cakey.pem
 
 # This runs for both LDAP and non-LDAP configs
 create_endpoints(){
@@ -123,10 +123,8 @@ create_endpoints(){
   export INT_ENDPOINT=${INT_IP}
   export ADMIN_ENDPOINT=${ADMIN_IP}
   export SERVICE_TOKEN=ADMIN
-  export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+  export SERVICE_ENDPOINT=http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
   export PASSWORD=openstack
-  export OS_CACERT=/vagrant/ca.pem
-  export OS_KEY=/vagrant/cakey.pem
 
    # OpenStack Compute Nova API Endpoint
   keystone  service-create --name nova --type compute --description 'OpenStack Compute Service'
@@ -176,9 +174,9 @@ create_endpoints(){
   # Keystone OpenStack Identity Service
   KEYSTONE_SERVICE_ID=$(keystone  service-list | awk '/\ keystone\ / {print $2}')
 
-  PUBLIC="https://$ENDPOINT:5000/v2.0"
-  ADMIN="https://$ADMIN_ENDPOINT:35357/v2.0"
-  INTERNAL="https://$INT_ENDPOINT:5000/v2.0"
+  PUBLIC="http://$ENDPOINT:5000/v2.0"
+  ADMIN="http://$ADMIN_ENDPOINT:35357/v2.0"
+  INTERNAL="http://$INT_ENDPOINT:5000/v2.0"
 
   keystone  endpoint-create --region regionOne --service_id $KEYSTONE_SERVICE_ID --publicurl $PUBLIC --adminurl $ADMIN --internalurl $INTERNAL
 
@@ -261,7 +259,7 @@ else
   export INT_ENDPOINT=${INT_IP}
   export ADMIN_ENDPOINT=${ADMIN_IP}
   export SERVICE_TOKEN=ADMIN
-  export SERVICE_ENDPOINT=https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+  export SERVICE_ENDPOINT=http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
   export PASSWORD=openstack
 
   # admin role
@@ -410,8 +408,8 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${GLANCE_SERVICE_USER}
 admin_password = ${GLANCE_SERVICE_PASS}
@@ -422,7 +420,7 @@ insecure = True
 filesystem_store_datadir = /var/lib/glance/images/
 #stores = glance.store.swift.Store
 #swift_store_auth_version = 2
-#swift_store_auth_address = https://${ETH3_IP}:5000/v2.0/
+#swift_store_auth_address = http://${ETH3_IP}:5000/v2.0/
 #swift_store_user = service:glance
 #swift_store_key = glance
 #swift_store_container = glance
@@ -467,8 +465,8 @@ backend = sqlalchemy
 connection = mysql://glance:openstack@172.16.0.200/glance
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${GLANCE_SERVICE_USER}
 admin_password = ${GLANCE_SERVICE_PASS}
@@ -494,7 +492,7 @@ sudo glance-manage db_sync
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
 export OS_PASSWORD=openstack
-export OS_AUTH_URL=https://${ETH3_IP}:5000/v2.0/
+export OS_AUTH_URL=http://${ETH3_IP}:5000/v2.0/
 export OS_NO_CACHE=1
 
 #sudo apt-get -y install wget
@@ -509,7 +507,7 @@ UBUNTU="trusty-server-cloudimg-amd64-disk1.img"
 if [[ ! -f /vagrant/${CIRROS} ]]
 then
         # Download then store on local host for next time
-	wget --quiet https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img -O /vagrant/${CIRROS}
+	wget --quiet http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img -O /vagrant/${CIRROS}
 fi
 
 if [[ ! -f /vagrant/${UBUNTU} ]]
@@ -602,7 +600,7 @@ nova_region_name = regionOne
 nova_admin_username = ${NOVA_SERVICE_USER}
 nova_admin_tenant_id = ${SERVICE_TENANT_ID}
 nova_admin_password = ${NOVA_SERVICE_PASS}
-nova_admin_auth_url = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
+nova_admin_auth_url = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0
 nova_ca_certificates_file = /etc/ssl/certs/ca.pem
 # nova_api_insecure = True
 
@@ -626,8 +624,8 @@ nova_ca_certificates_file = /etc/ssl/certs/ca.pem
 root_helper = sudo
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NEUTRON_SERVICE_USER}
 admin_password = ${NEUTRON_SERVICE_PASS}
@@ -779,7 +777,7 @@ neutron_auth_strategy=keystone
 neutron_admin_tenant_name=service
 neutron_admin_username=neutron
 neutron_admin_password=neutron
-neutron_admin_auth_url=https://${ETH3_IP}:5000/v2.0
+neutron_admin_auth_url=http://${ETH3_IP}:5000/v2.0
 libvirt_vif_driver=nova.virt.libvirt.vif.LibvirtHybridOVSBridgeDriver
 linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
 #firewall_driver=nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -811,7 +809,7 @@ scheduler_default_filters=AllHostsFilter
 
 # Auth
 auth_strategy=keystone
-keystone_ec2_url=https://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
+keystone_ec2_url=http://${KEYSTONE_ENDPOINT}:5000/v2.0/ec2tokens
 
 # NoVNC
 novnc_enabled=true
@@ -827,8 +825,8 @@ vncserver_proxyclient_address=${ETH3_IP}
 vncserver_listen=0.0.0.0
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${NOVA_SERVICE_USER}
 admin_password = ${NOVA_SERVICE_PASS}
@@ -902,15 +900,15 @@ TEMPLATE_DEBUG = DEBUG
 # If horizon is running in production (DEBUG is False), set this
 # with the list of host/domain names that the application can serve.
 # For more information see:
-# https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
+# http://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 #ALLOWED_HOSTS = ['horizon.example.com', ]
 
 # Set SSL proxy settings:
 # For Django 1.4+ pass this header from the proxy after terminating the SSL,
 # and don't forget to strip it from the client's request.
 # For more information see:
-# https://docs.djangoproject.com/en/1.4/ref/settings/#secure-proxy-ssl-header
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+# http://docs.djangoproject.com/en/1.4/ref/settings/#secure-proxy-ssl-header
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'http')
 
 # If Horizon is being served through SSL, then uncomment the following two
 # settings to better secure the cookies from security exploits
@@ -1022,7 +1020,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # ]
 
 OPENSTACK_HOST = "${ETH3_IP}"
-OPENSTACK_KEYSTONE_URL = "https://%s:5000/v2.0" % OPENSTACK_HOST
+OPENSTACK_KEYSTONE_URL = "http://%s:5000/v2.0" % OPENSTACK_HOST
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "_member_"
 
 # Disable SSL certificate checks (useful for self-signed certificates):
@@ -1354,7 +1352,7 @@ SECURITY_GROUP_RULES = {
         'from_port': '389',
         'to_port': '389',
     },
-    'https': {
+    'http': {
         'name': 'HTTPS',
         'ip_protocol': 'tcp',
         'from_port': '443',
@@ -1444,7 +1442,7 @@ LOGIN_REDIRECT_URL='/'
 
 # By default, validation of the HTTP Host header is disabled.  Production
 # installations should have this set accordingly.  For more information
-# see https://docs.djangoproject.com/en/dev/ref/settings/.
+# see http://docs.djangoproject.com/en/dev/ref/settings/.
 ALLOWED_HOSTS = '*'
 
 # Compress all assets offline as part of packaging installation
@@ -1477,7 +1475,7 @@ cat > /vagrant/openrc <<EOF
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
 export OS_PASSWORD=openstack
-export OS_AUTH_URL=https://${ETH3_IP}:5000/v2.0/
+export OS_AUTH_URL=http://${ETH3_IP}:5000/v2.0/
 export OS_KEY=/vagrant/cakey.pem
 export OS_CACERT=/vagrant/ca.pem
 EOF

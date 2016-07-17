@@ -36,8 +36,8 @@ ssh-keyscan controller >> ~/.ssh/known_hosts
 cat /vagrant/id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys
 cp /vagrant/id_rsa* ~/.ssh/
 
-sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
-sudo c_rehash /etc/ssl/certs/ca.pem
+#sudo scp root@controller:/etc/ssl/certs/ca.pem /etc/ssl/certs/ca.pem
+#sudo c_rehash /etc/ssl/certs/ca.pem
 
 # Configure Cinder
 # /etc/cinder/api-paste.ini
@@ -97,8 +97,8 @@ backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}
@@ -161,8 +161,8 @@ backend=sqlalchemy
 connection = mysql://cinder:${MYSQL_CINDER_PASS}@${CONTROLLER_HOST}/cinder
 
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CINDER_SERVICE_USER}
 admin_password = ${CINDER_SERVICE_PASS}

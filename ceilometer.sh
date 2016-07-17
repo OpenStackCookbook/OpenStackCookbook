@@ -33,7 +33,7 @@ sudo service mongodb restart
 #
 #echo "
 #[keystone_authtoken]
-#identity_uri = https://${ETH3_IP}:35357
+#identity_uri = http://${ETH3_IP}:35357
 #admin_tenant_name = service
 #admin_user = ceilometer
 #admin_password = ceilometer
@@ -66,8 +66,8 @@ host = 172.16.0.200
 port = 8777
  
 [keystone_authtoken]
-auth_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
-identity_uri = https://${KEYSTONE_ADMIN_ENDPOINT}:5000
+auth_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:35357/v2.0/
+identity_uri = http://${KEYSTONE_ADMIN_ENDPOINT}:5000
 admin_tenant_name = ${SERVICE_TENANT}
 admin_user = ${CEILOMETER_SERVICE_USER}
 admin_password = ${CEILOMETER_SERVICE_PASS}
@@ -75,7 +75,7 @@ admin_password = ${CEILOMETER_SERVICE_PASS}
 insecure = True
 
 [service_credentials]
-os_auth_url = https://192.168.100.200:5000/v2.0
+os_auth_url = http://192.168.100.200:5000/v2.0
 os_username = ceilometer
 os_tenant_name = service
 os_password = ceilometer

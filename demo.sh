@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This scripts assumes *a lot*
 # Run it once, as soon as you've booted the vagrant environment:
@@ -21,17 +21,10 @@ fi
 export OS_TENANT_NAME=cookbook
 export OS_USERNAME=admin
 export OS_PASSWORD=openstack
-export OS_AUTH_URL=https://192.168.100.200:5000/v2.0/
+export OS_AUTH_URL=http://192.168.100.200:5000/v2.0/
 export OS_NO_CACHE=1
 export OS_KEY=/vagrant/cakey.pem
 export OS_CACERT=/vagrant/ca.pem
-
-# Aliases for insecure SSL
-alias nova='nova --insecure'
-alias keystone='keystone --insecure'
-alias neutron='neutron --insecure'
-alias glance='glance --insecure'
-alias cinder='cinder --insecure'
 
 TENANT_ID=$(keystone tenant-list \
    | awk '/\ cookbook\ / {print $2}')

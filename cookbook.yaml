@@ -40,7 +40,7 @@ resources:
       user_data: |
         #!/bin/bash -v
         export DEBIAN_FRONTEND=noninteractive
-        export http_proxy=http://192.168.100.1:3128/
+        #export http_proxy=http://192.168.100.1:3128/
         apt-get update
         apt-get -y install apache2
 
@@ -65,7 +65,7 @@ resources:
       user_data: |
         #!/bin/bash -v
         export DEBIAN_FRONTEND=noninteractive
-        export http_proxy=http://192.168.100.1:3128/
+        #export http_proxy=http://192.168.100.1:3128/
         apt-get update
         apt-get -y install apache2
 
@@ -93,14 +93,14 @@ resources:
             #!/bin/bash -v
             #Install and configure haproxy
             export DEBIAN_FRONTEND=noninteractive
-            export http_proxy=http://192.168.100.1:3128/
+            #export http_proxy=http://192.168.100.1:3128/
             apt-get update
             apt-get -y install haproxy
             rm -rf /etc/haproxy/haproxy.cfg
             echo "
             global
                 log 127.0.0.1 local0 debug
-                maxconn   45000 # Total Max Connections. This is dependent on ul                    imit
+                maxconn   45000 # Total Max Connections. This is dependent on ulimit
                 user haproxy
                 group haproxy
                 daemon

@@ -1,20 +1,27 @@
 {
   "builders": [
     {"type": "virtualbox-iso",
+    "vboxmanage": [
+      [
+        "modifyvm", "{{.Name}}", "--nictype1", "virtio"
+      ]
+    ],
     "guest_os_type": "Ubuntu_64",
-    "iso_url": "http://mirror.anl.gov/pub/ubuntu-iso/CDs-Ubuntu/trusty/ubuntu-14.04.1-server-amd64.iso",
-    "iso_checksum": "ca2531b8cd79ea5b778ede3a524779b9",
+    "headless": "",
+    "iso_url": "http://mirror.pnl.gov/releases/14.04.5/ubuntu-14.04.5-server-amd64.iso",
+    "iso_checksum": "dd54dc8cfc2a655053d19813c2f9aa9f",
     "iso_checksum_type":"md5",
     "http_directory": "preseed",
     "ssh_username": "vagrant",
     "ssh_password": "vagrant",
     "boot_wait":"5s",
+    "ssh_wait_timeout": "10000s",
     "output_directory": "ubuntu64_basebox_virtualbox",
     "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
     "boot_command": [
       "<esc><esc><enter><wait>",
       "/install/vmlinuz noapic ",
-      "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+      "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
       "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
       "hostname={{ .Name }} ",
       "fb=false debconf/frontend=noninteractive ",
@@ -25,20 +32,29 @@
     },
     {"type": "vmware-iso",
     "guest_os_type": "ubuntu-64",
-    "iso_url": "http://mirror.anl.gov/pub/ubuntu-iso/CDs-Ubuntu/trusty/ubuntu-14.04.1-server-amd64.iso",
-    "iso_checksum": "ca2531b8cd79ea5b778ede3a524779b9",
+    "headless": "",
+    "iso_url": "http://mirror.pnl.gov/releases/14.04.5/ubuntu-14.04.5-server-amd64.iso",
+    "iso_checksum": "dd54dc8cfc2a655053d19813c2f9aa9f",
     "iso_checksum_type":"md5",
     "http_directory": "preseed",
     "ssh_username": "vagrant",
     "ssh_password": "vagrant",
     "boot_wait":"5s",
+    "ssh_wait_timeout": "10000s",
     "tools_upload_flavor": "linux",
     "output_directory": "ubuntu64_basebox_vmware",
     "shutdown_command": "echo 'shutdown -P now' > shutdown.sh; echo 'vagrant'|sudo -S sh 'shutdown.sh'",
+    "vmx_data": {
+      "ethernet0.present": "TRUE",
+      "ethernet0.connectionType": "nat",
+      "ethernet0.bsdname": "eth0",
+      "ethernet0.startConnected": "TRUE",
+      "ethernet0.virtualDev": "vmxnet3"
+    },
     "boot_command": [
       "<esc><esc><enter><wait>",
       "/install/vmlinuz noapic ",
-      "ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+      "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
       "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
       "hostname={{ .Name }} ",
       "fb=false debconf/frontend=noninteractive ",

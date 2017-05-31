@@ -23,7 +23,7 @@ nodes = {
 }
 
 Vagrant.configure("2") do |config|
-    
+
   # Defaults
   config.vm.box = "bunchc/trusty-x64"
   config.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
   # VirtualBox
   config.vm.provider :virtualbox do |vbox, override|
     override.vm.box = "bunchc/trusty-x64"
-    if Vagrant::Util::Platform.windows? 
+    if Vagrant::Util::Platform.windows?
       override.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=700","fmode=700"]
     else
       override.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
   # VMware Fusion / Workstation
   config.vm.provider :vmware_fusion or config.vm.provider :vmware_workstation do |vmware, override|
     override.vm.box = "bunchc/trusty-x64"
-    if Vagrant::Util::Platform.windows? 
+    if Vagrant::Util::Platform.windows?
       override.vm.synced_folder ".", "/vagrant", type: "smb"
     else
       override.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -65,9 +65,9 @@ Vagrant.configure("2") do |config|
   end
 
   #Default is 2200..something, but port 2200 is used by forescout NAC agent.
-  config.vm.usable_port_range= 2800..2900 
+  config.vm.usable_port_range= 2800..2900
 
-  unless Vagrant::Util::Platform.windows? 
+  unless Vagrant::Util::Platform.windows?
     if Vagrant.has_plugin?("vagrant-cachier")
       config.cache.scope = :box
       config.cache.enable :apt
@@ -91,10 +91,10 @@ Vagrant.configure("2") do |config|
       config.vm.define "#{hostname}" do |box|
         box.vm.hostname = "#{hostname}.cook.book"
         box.vm.network :private_network, ip: "172.16.0.#{ip_start+i}", :netmask => "255.255.0.0"
-        box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.255.0" 
-      	box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0" 
+        box.vm.network :private_network, ip: "10.10.0.#{ip_start+i}", :netmask => "255.255.255.0"
+      	box.vm.network :private_network, ip: "192.168.100.#{ip_start+i}", :netmask => "255.255.255.0"
 
-        #if Vagrant::Util::Platform.windows? 
+        #if Vagrant::Util::Platform.windows?
         #  box.vm.provision :shell, :path => "fixWinHost.sh"
         #end
 
@@ -119,9 +119,9 @@ Vagrant.configure("2") do |config|
 
           # Things will fail if running Windows + VirtualBox without vbguest
           if Vagrant::Util::Platform.windows?
-            unless Vagrant.has_plugin?("vagrant-vbguest") 
+            unless Vagrant.has_plugin?("vagrant-vbguest")
               raise 'Please install vagrant-vbguest. Running this environment under Windows will fail otherwise. Install with: vagrant plugin install vagrant-vbguest'
-            end 
+            end
           end
 
           # Defaults

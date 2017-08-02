@@ -1,3 +1,7 @@
+### There is a newer OpenStackCookbook OpenStack Environment based 
+### on Ansible in support of the upcoming 4th Edition, based on Ocata!
+### Visit https://github.com/OpenStackCookbook/vagrant-openstack
+
 ## OpenStack Cloud Computing Cookbook 3rd Edition (Release 2015)
 #### Supporting vagrant scripts
 ## Buy The Book

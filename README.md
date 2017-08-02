@@ -36,6 +36,7 @@ The book covers:
 ### Requirements
 * Vagrant 1.6+ http://www.vagrantup.com/
 * VirtualBox 4.5+ http://www.virtualbox.org/
+* The default Vagrantfile assumes NFSD is enabled on the the host
 
 ### vagrant-cachier (optional but recommended)
 ```bash
